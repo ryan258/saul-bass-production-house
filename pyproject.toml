@@ -1,0 +1,12 @@
+[project]
+name = "saul-bass-production-house"
+version = "0.2.0"
+description = "Local graphic film animation, audio cues, and editable Resolve timelines"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "opentimelineio==0.18.1",
+  "otio-fcp-adapter==1.0.0",
+  "ffmpeg-python==0.2.0",
+  "librosa==1.0.0",
+  "moviepy==2.2.1",
+]

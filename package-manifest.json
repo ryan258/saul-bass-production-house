@@ -1,0 +1,456 @@
+{
+  "files": [
+    {
+      "file": ".claude/skills/gitnexus-cli/SKILL.md",
+      "bytes": 8280,
+      "sha256": "f4c4c0a147c7835cef2748fe9096fcbb78d07d8ea7b289d7346a26f77d6bd8f3"
+    },
+    {
+      "file": ".claude/skills/gitnexus-debugging/SKILL.md",
+      "bytes": 5222,
+      "sha256": "4d79e789cdc40a1fbf67e9bdf57be839646c6da914ec5a92312470be7810f73e"
+    },
+    {
+      "file": ".claude/skills/gitnexus-exploring/SKILL.md",
+      "bytes": 4124,
+      "sha256": "1e95202409cfd4448f953711d953a61f1bb68b076c9beb265fe701054d24ab70"
+    },
+    {
+      "file": ".claude/skills/gitnexus-guide/SKILL.md",
+      "bytes": 10265,
+      "sha256": "746d057790de5b034d19d603dfa77eb9b596407918025481b4b29214efee2581"
+    },
+    {
+      "file": ".claude/skills/gitnexus-impact-analysis/SKILL.md",
+      "bytes": 7038,
+      "sha256": "5e09acc141b13a585c39314947388b6668d9bcc3daf65cf3c8b32969882cbec3"
+    },
+    {
+      "file": ".claude/skills/gitnexus-refactoring/SKILL.md",
+      "bytes": 6339,
+      "sha256": "2c52bb42fe714e458d2d8f7f4a62d59053036f35b3d8c8c63c290819f0734000"
+    },
+    {
+      "file": ".gitignore",
+      "bytes": 89,
+      "sha256": "32b217a0a4bf5ff06976109b9ca353af98a58c571f119e6f75568f0ebae5b3c2"
+    },
+    {
+      "file": "AGENTS.md",
+      "bytes": 3662,
+      "sha256": "b460072d877cd72bb9c4b5e67b6a854502b90dd06cee20731af8798d211d0b18"
+    },
+    {
+      "file": "CLAUDE.md",
+      "bytes": 3662,
+      "sha256": "b460072d877cd72bb9c4b5e67b6a854502b90dd06cee20731af8798d211d0b18"
+    },
+    {
+      "file": "README.md",
+      "bytes": 8871,
+      "sha256": "a4db42464643da73835ecfd14577c1752bfb9a49807cfe4278745e588d97d5e1"
+    },
+    {
+      "file": "bone-app-svg-collection.zip",
+      "bytes": 35245682,
+      "sha256": "fadbbfd5da4a9518b78f1a16a0c509f616add8853e05b21c76bf4194fa747339"
+    },
+    {
+      "file": "docs/creative-workflow.md",
+      "bytes": 7879,
+      "sha256": "6e421852aaa67016ce410afe574acdabafaac4f4e774f872da82035bb030886e"
+    },
+    {
+      "file": "docs/current-state.md",
+      "bytes": 9140,
+      "sha256": "12338756954f3b45b57442cbdad781b72c27734e099e320d5941cb621a6653c6"
+    },
+    {
+      "file": "docs/generic-verification.md",
+      "bytes": 5458,
+      "sha256": "f3033ce295c610bba449753cff28fb36f64503daf01aa421c46221e50dd25846"
+    },
+    {
+      "file": "docs/happy-path.md",
+      "bytes": 3592,
+      "sha256": "afcb79eaaf2f263f73f73479b4bd5e8309294383148b2255c36143bd8ca03cc6"
+    },
+    {
+      "file": "docs/library-choices.md",
+      "bytes": 2923,
+      "sha256": "99d5bc2f64888ea8e8cc96c17a15ab54f26baaed33b7c46785a886b50abcb394"
+    },
+    {
+      "file": "docs/motion-canvas.md",
+      "bytes": 6378,
+      "sha256": "105b9f0be3f007453b4e2a4d71ae3226397c5c83ffe96bd49f5e4d12af203ef0"
+    },
+    {
+      "file": "docs/portable-editorial.md",
+      "bytes": 7032,
+      "sha256": "9f18df0f9cc3a98bad2d4995521b55081988f44fcd9c9a233ebecf3afc0babd8"
+    },
+    {
+      "file": "docs/production-validation.md",
+      "bytes": 6950,
+      "sha256": "b4d590fb5498abf8cf6d727c164881cb5b22da2536b02f73f2fd615b9f6ae547"
+    },
+    {
+      "file": "docs/resolve-handoff.md",
+      "bytes": 3155,
+      "sha256": "a6b6824f90c088727ada927911e2dc263adf04a6231d4b4f9bcdabac49835c82"
+    },
+    {
+      "file": "examples/signal/.gitignore",
+      "bytes": 38,
+      "sha256": "5b9577bc3e23927eb0869ea35dfa452c41e515c0a9cf574e4b7a510d762937f7"
+    },
+    {
+      "file": "examples/signal/README.md",
+      "bytes": 5545,
+      "sha256": "6cf6201e66d13ba8354107dfb42475193990b8748a4457845749ececd9606d0a"
+    },
+    {
+      "file": "examples/signal/data/edit.json",
+      "bytes": 1135,
+      "sha256": "4d171fb2d6d9d9abd6a6194555a15f82c02e6b5d9b0a5af4352e0ff953319043"
+    },
+    {
+      "file": "examples/signal/make",
+      "bytes": 1519,
+      "sha256": "4056e78b8bf2f30a534f3eea3818af968cd0a1995e82d3fc3bfbf0948c6122c0"
+    },
+    {
+      "file": "examples/signal/motion/approach/env.d.ts",
+      "bytes": 330,
+      "sha256": "b8d95730a9e21be451a54a603ac1b9bf3261a4c9e19dc3399e65b480ba291c66"
+    },
+    {
+      "file": "examples/signal/motion/approach/project.ts",
+      "bytes": 215,
+      "sha256": "69628b63db2b8a8dec8b8969a452cfb62727c50fa80c7752ea1f0701b1525b77"
+    },
+    {
+      "file": "examples/signal/motion/approach/scene.tsx",
+      "bytes": 448,
+      "sha256": "c5a4c9429c2f0f2815546583969f6d1eb76ee6ebde8fdc54f190a6bbb098108e"
+    },
+    {
+      "file": "examples/signal/motion/approach/tsconfig.json",
+      "bytes": 393,
+      "sha256": "642e7bf6172fe9762b3b6e3dacdf1ed70d4791131a6fab1895633218fc7d037a"
+    },
+    {
+      "file": "examples/signal/motion/arrival/env.d.ts",
+      "bytes": 330,
+      "sha256": "b8d95730a9e21be451a54a603ac1b9bf3261a4c9e19dc3399e65b480ba291c66"
+    },
+    {
+      "file": "examples/signal/motion/arrival/project.ts",
+      "bytes": 215,
+      "sha256": "69628b63db2b8a8dec8b8969a452cfb62727c50fa80c7752ea1f0701b1525b77"
+    },
+    {
+      "file": "examples/signal/motion/arrival/scene.tsx",
+      "bytes": 623,
+      "sha256": "c7b9dfb9e83f58660028804944529f4487f4adb320b7cc5d3c3cc7b11c37ee83"
+    },
+    {
+      "file": "examples/signal/motion/arrival/tsconfig.json",
+      "bytes": 393,
+      "sha256": "642e7bf6172fe9762b3b6e3dacdf1ed70d4791131a6fab1895633218fc7d037a"
+    },
+    {
+      "file": "examples/signal/motion/bridge/env.d.ts",
+      "bytes": 330,
+      "sha256": "b8d95730a9e21be451a54a603ac1b9bf3261a4c9e19dc3399e65b480ba291c66"
+    },
+    {
+      "file": "examples/signal/motion/bridge/project.ts",
+      "bytes": 215,
+      "sha256": "69628b63db2b8a8dec8b8969a452cfb62727c50fa80c7752ea1f0701b1525b77"
+    },
+    {
+      "file": "examples/signal/motion/bridge/scene.tsx",
+      "bytes": 532,
+      "sha256": "1ceb88d73fa21ae3e5897e2fe2136ae773b34be340887e77fa85d62bc4b08711"
+    },
+    {
+      "file": "examples/signal/motion/bridge/tsconfig.json",
+      "bytes": 393,
+      "sha256": "642e7bf6172fe9762b3b6e3dacdf1ed70d4791131a6fab1895633218fc7d037a"
+    },
+    {
+      "file": "examples/signal/scripts/prepare.py",
+      "bytes": 1893,
+      "sha256": "2cad39424adc1bb93b88148429fa4d4667b1fea3310bc9f0f8b90d0021698313"
+    },
+    {
+      "file": "examples/signal/src/film.cjs",
+      "bytes": 2072,
+      "sha256": "86f4150c9e31b18807dff6fa9c10a5bc7838a746f9f0ad7386303f8027e97da3"
+    },
+    {
+      "file": "examples/unit-9.json",
+      "bytes": 355,
+      "sha256": "e05ba2887a78bfb1c07ad578faf450a823fee40b99a3abc49c568ea5fd79b884"
+    },
+    {
+      "file": "motion-canvas/render.html",
+      "bytes": 1748,
+      "sha256": "bc20f0a5a99ccb4090c3770992eda0ce474444153fdf230a5d2b7d8982f1660e"
+    },
+    {
+      "file": "motion-canvas/render.mjs",
+      "bytes": 5369,
+      "sha256": "8d5f341437ee521995bbaa1a737f250f31f29f4353ffb4dc3703d09dc3fa107b"
+    },
+    {
+      "file": "motion-canvas/typecheck.mjs",
+      "bytes": 1044,
+      "sha256": "32029aa1e49f37fe63fd56c630e5b33628f3b59fc9c568325670357c86ea9e26"
+    },
+    {
+      "file": "motion-canvas/vite.config.ts",
+      "bytes": 1455,
+      "sha256": "dfaec4bb878ec4c27fc8767e46883f1a5bee0e0435a03c73a5b5d9266d648e48"
+    },
+    {
+      "file": "package-lock.json",
+      "bytes": 94355,
+      "sha256": "f540b24ccad5b3d4164acafc77779e8a88b42bcfc0a0fe344c36bbe3f0aedc8a"
+    },
+    {
+      "file": "package.json",
+      "bytes": 719,
+      "sha256": "d41bf2339fc4de30564f168767b88bddaf2c8d337197d0070e606e0b49334e44"
+    },
+    {
+      "file": "pyproject.toml",
+      "bytes": 328,
+      "sha256": "121166a8f34d646477bbd09003eaa6d5a03f85d4e68ff9a47b7780f4d0f3d6ac"
+    },
+    {
+      "file": "render/draft.cjs",
+      "bytes": 1149,
+      "sha256": "02e55d6cf662197381386453678e51427578e83081767fcff5d1d4fb7317fed8"
+    },
+    {
+      "file": "render/emit.cjs",
+      "bytes": 779,
+      "sha256": "2c456890db0e25773176f59cf8dae9f26751ce4e56b2c8fb587704caa018129c"
+    },
+    {
+      "file": "render/runtime.cjs",
+      "bytes": 700,
+      "sha256": "519abfe3263770f9a62d104187cf2bdd50f5179d8eaf632da55e102252383b24"
+    },
+    {
+      "file": "requirements.lock",
+      "bytes": 635,
+      "sha256": "766f347dd81b3b29d296b437eb5ffcaceff6ba1ecbf18d9751562cda637ae831"
+    },
+    {
+      "file": "sbph",
+      "bytes": 328,
+      "sha256": "37502477e1403d9a45a84849dd1114ac699b5733b45b5dbec2720355e0405db7"
+    },
+    {
+      "file": "scripts/setup.sh",
+      "bytes": 311,
+      "sha256": "76850f77d2420553f6cab87e9e5dd897fe64d41c0891fdf5e87989b14ea9c22b"
+    },
+    {
+      "file": "signal",
+      "bytes": 131,
+      "sha256": "1099f5244bfb82f38bd573d1dffa79d4d9c6fa392d4ef9f092768018d640730e"
+    },
+    {
+      "file": "src/sbph/__init__.py",
+      "bytes": 110,
+      "sha256": "677fd6be33dc919b4cf723fa6ea5685771244f801c950d82052a90915d016e68"
+    },
+    {
+      "file": "src/sbph/__main__.py",
+      "bytes": 10311,
+      "sha256": "7889ac0f21f29b6f652e296a256299ca59ab02533e5569360602db6a16c3dbc7"
+    },
+    {
+      "file": "src/sbph/analyze.py",
+      "bytes": 1996,
+      "sha256": "9aba38f2e7dd17c9f6db83c36dcd3a0c0c8ccb18fde23184266b699e5c153b4f"
+    },
+    {
+      "file": "src/sbph/assembly_check.py",
+      "bytes": 3179,
+      "sha256": "5a427d11bc765bafdd6e5dc7b64254154d1fe4b1b0a09723b87cd1e78c55f0ef"
+    },
+    {
+      "file": "src/sbph/delivery.py",
+      "bytes": 942,
+      "sha256": "fa2bfc5b4e5fc38fc994d187845f55731be22e3e0335d692ec7561c5f48a5c13"
+    },
+    {
+      "file": "src/sbph/drafts.py",
+      "bytes": 13213,
+      "sha256": "a94522cdb837ed127be282c068d95c3be8aeb6bcd8adc088b931f1b129b4ca4d"
+    },
+    {
+      "file": "src/sbph/editor_return.py",
+      "bytes": 9952,
+      "sha256": "0c2aced685d87a54595882993e4d38db0fef6a5ed9e0f3f73df06451f6ee3afd"
+    },
+    {
+      "file": "src/sbph/fingerprint.py",
+      "bytes": 6188,
+      "sha256": "98a9cd78afa13685627bb11675b7651cd5bed852a99b5b35de10f3ac1194d7d0"
+    },
+    {
+      "file": "src/sbph/handoff.py",
+      "bytes": 7443,
+      "sha256": "96830ccd425576af5207cbe9b6e98048c8642546a0b628f76e0ab411f86519ea"
+    },
+    {
+      "file": "src/sbph/media.py",
+      "bytes": 5790,
+      "sha256": "42d492cf297501c70c9c568cc41329abc8684040c75bbaf2c9329d22729f7c28"
+    },
+    {
+      "file": "src/sbph/motion.py",
+      "bytes": 12591,
+      "sha256": "3c1fdfcdca4f4ad31b59f5e4003905efb1872715a9799e951b85c94541f7676e"
+    },
+    {
+      "file": "src/sbph/motion_film.py",
+      "bytes": 15190,
+      "sha256": "e447e3dbe9a6a9099ffd1f143f1ea4d796008325385b4d61b9e4d29c7c98a1fd"
+    },
+    {
+      "file": "src/sbph/motion_shots.py",
+      "bytes": 3276,
+      "sha256": "0666e955b2b46f0850c54817f7e9f9c9a5746433ada8f9bebd6ec5f879f23f7d"
+    },
+    {
+      "file": "src/sbph/preview.py",
+      "bytes": 2022,
+      "sha256": "e30501202a49c85bd5c54973cab58191b8ad0781c0b79ad5d3ac4cc13ca5241d"
+    },
+    {
+      "file": "src/sbph/project.py",
+      "bytes": 4064,
+      "sha256": "522c0516f217214b21f1fea3597cf146b3a71a971505328ca21151c9923a4479"
+    },
+    {
+      "file": "src/sbph/review.py",
+      "bytes": 3498,
+      "sha256": "0f32fa157ccbae76b34e2e66376df411940b4412eab9338c8c42e680cdebe24d"
+    },
+    {
+      "file": "src/sbph/shot_backend.py",
+      "bytes": 2072,
+      "sha256": "2782cba0bf137091257118e605fd0ba29c0248ec0537434d1cdeab0a38ba8556"
+    },
+    {
+      "file": "src/sbph/status.py",
+      "bytes": 8178,
+      "sha256": "dc8291d214ab7b967c481e5f08910258b24606701f0166b6adfb85200501299f"
+    },
+    {
+      "file": "src/sbph/timeline.py",
+      "bytes": 4625,
+      "sha256": "1b4ad518d1f1a8820d3a6b6363c809b6f1a23f3ec88924169f94366662e68a94"
+    },
+    {
+      "file": "src/sbph/unit9_checks.py",
+      "bytes": 1955,
+      "sha256": "5414159ece4c8cfa220f15d08db99e84f82a5f710a6d8b64da2d7a230822516a"
+    },
+    {
+      "file": "src/sbph/validation.py",
+      "bytes": 5461,
+      "sha256": "9395598803ad2ca0102aa9060b6680d9dd4597d8d32ffef714d761128f65d301"
+    },
+    {
+      "file": "src/sbph/verify.py",
+      "bytes": 8748,
+      "sha256": "a12d1ff36af9bce57a3b74aec3046c02e46b80f8861262508b382a00cceb7d8d"
+    },
+    {
+      "file": "src/sbph/workflow.py",
+      "bytes": 9671,
+      "sha256": "4265e63892c345008f1a512c7db21ea27c34b9ef3ab45f8714fd9ca6392f6227"
+    },
+    {
+      "file": "tests/test_audio_comparison.py",
+      "bytes": 3418,
+      "sha256": "21436fa0793fefc4f30f840040f847746ed874d921efb918e4c701eb1481e5fd"
+    },
+    {
+      "file": "tests/test_draft_workflow.py",
+      "bytes": 6947,
+      "sha256": "e661c84df673fa0b5958349e84c28321ed11c3fec1c29a9eca1e2629c081a2f8"
+    },
+    {
+      "file": "tests/test_generic_verification.py",
+      "bytes": 8715,
+      "sha256": "78cfcf2f65810e6a1df2c3c80b5f3b863c8a68c1de411ceb0fd244a38aac2355"
+    },
+    {
+      "file": "tests/test_handoff_return.py",
+      "bytes": 9269,
+      "sha256": "afc928790491b6d74f778f1781353d10e0be96e17410975305dd88821d389d83"
+    },
+    {
+      "file": "tests/test_motion_audio.py",
+      "bytes": 2773,
+      "sha256": "0fc4ef602c8a044ba2c6d3b43123aadaa4f934d9109c23a8a0abae0eb6ba847d"
+    },
+    {
+      "file": "tests/test_motion_baseline.py",
+      "bytes": 5812,
+      "sha256": "6648fb294aea93d0855f8df2c43743ad3a07111fd24e5b86efe23738af69dcc5"
+    },
+    {
+      "file": "tests/test_motion_film_contract.py",
+      "bytes": 2389,
+      "sha256": "da559aa5207a21a43f1f229f4d5109a3bd73f3735dc22b696b7052832abbf06b"
+    },
+    {
+      "file": "tests/test_motion_shots.py",
+      "bytes": 5846,
+      "sha256": "2a4edaee7ce28e12a92f00b7ceb87dad8b8af79264193345a0115a8d4dd9d33e"
+    },
+    {
+      "file": "tests/test_production_validation.py",
+      "bytes": 11496,
+      "sha256": "cd952675d50641d0083a58cf9d8710d78a890c491419339976d7039d443245e6"
+    },
+    {
+      "file": "tests/test_second_film.py",
+      "bytes": 4187,
+      "sha256": "36b1df4480631b85dcf5fd77fe4abe00756197be8ec392842b3a84969e643a28"
+    },
+    {
+      "file": "tests/test_timeline_contract.py",
+      "bytes": 1753,
+      "sha256": "0c9e7222f44a95defc6de100fb799d842da15b69c625741686aa62a169506b74"
+    },
+    {
+      "file": "tests/test_workflow.py",
+      "bytes": 8614,
+      "sha256": "e3dc47c45bae0b2b9cac1b47a0564be0da07fa798f5081946e1f002855423d91"
+    },
+    {
+      "file": "tests/workflow_fixtures.py",
+      "bytes": 821,
+      "sha256": "6c640f3f7fc17dacea0e31dc21acaa0cb66928eadd1875ad93b2c4e51bbd94c9"
+    },
+    {
+      "file": "unit9",
+      "bytes": 208,
+      "sha256": "dbc2564c32e702098cc3a74c6330ff97ab8c0ba379933f62802ddb55e1364135"
+    }
+  ],
+  "excludes": "Runtime environments, caches including .gitnexus, pyc, .DS_Store, and this manifest itself.",
+  "scope": "Prepared sources and deliveries, including native Motion Canvas full film and portable editorial pass (motion shots, collected handoffs, editor returns). Pass two adds the self-contained Signal example and generic verification. Pass three adds local status/resume, shot intent, timecoded notes, draft animatics, and bounded SVG revision previews. Pass four adds Motion Canvas shot registration, collected handoff packaging, and read-only editor-return comparison. Existing Unit 9 outputs are preserved."
+}
