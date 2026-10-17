@@ -1,0 +1,9 @@
+#!/bin/sh
+set -eu
+sbph_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+if [ ! -x "$sbph_dir/.venv/bin/python" ]; then
+  echo "Run scripts/setup.sh once to install the locked, project-local environment." >&2
+  exit 1
+fi
+export PYTHONPATH="$sbph_dir/src${PYTHONPATH:+:$PYTHONPATH}"
+exec "$sbph_dir/.venv/bin/python" -m sbph "$@"

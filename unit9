@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+sbph_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+sbph_command=${1:-doctor}
+if [ "$#" -gt 0 ]; then shift; fi
+exec "$sbph_dir/sbph" "$sbph_command" "$sbph_dir/examples/unit-9.json" "$@"

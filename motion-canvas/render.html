@@ -1,0 +1,35 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="icon" href="data:,"><title>SBPH Motion Canvas render</title></head>
+<body><script type="module">
+import project from 'virtual:sbph-project';
+import {Renderer, Vector2} from '@motion-canvas/core';
+
+window.sbphRender = async options => {
+  const errors = project.logger.history.filter(entry => entry.level === 'error').map(entry => entry.message);
+  project.logger.onLogged.subscribe(entry => {
+    if (entry.level === 'error') errors.push(entry.message);
+    console.log('[Motion Canvas]', entry.message);
+  });
+  const renderer = new Renderer(project);
+  let result = null;
+  renderer.onFinished.subscribe(value => result = value);
+  renderer.onFrameChanged.subscribe(frame => {
+    if (frame % (options.logEvery || 300) === 0) console.log('FRAME ' + frame);
+  });
+  const settings={
+    ...project.meta.getFullRenderingSettings(),
+    name: 'frames', size: new Vector2(options.width, options.height),
+    resolutionScale: 1, colorSpace: 'srgb', background: '#13252B',
+    fps: options.fps, range: [Math.max(0,((options.startFrame || 0)-1e-6) / options.fps), ((options.startFrame || 0) + options.frames - 1-1e-6) / options.fps],
+    exporter: {name: '@motion-canvas/core/image-sequence', options: {
+      fileType: 'image/png', quality: 100, groupByScene: false,
+    }},
+  };
+  if(options.sampleFrames){
+    for(const frame of options.sampleFrames) await renderer.renderFrame(settings,Math.max(0,(frame-1e-6)/options.fps));
+    result=0;
+  }else await renderer.render(settings);
+  if (result !== 0 || errors.length) throw new Error(JSON.stringify({result, errors}));
+  return {result, errors,cutAudit:globalThis.unit9CutAudit || null};
+};
+window.sbphReady = true;
+</script></body></html>
