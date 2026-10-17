@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+signal_framework=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+exec "$signal_framework/examples/signal/make" "$@"

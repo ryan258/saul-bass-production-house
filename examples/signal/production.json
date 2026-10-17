@@ -1,0 +1,13 @@
+{
+  "root": ".",
+  "edit": "data/edit.json",
+  "audio": "audio/source.wav",
+  "driver": "src/film.cjs",
+  "output": "production",
+  "delivery": "production/assembly.mp4",
+  "reference": "production/proof.mp4",
+  "handles": 4,
+  "proof_start": 0,
+  "proof_duration": 4,
+  "source_files": ["scripts/prepare.py"]
+}

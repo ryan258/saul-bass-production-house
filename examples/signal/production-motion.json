@@ -1,0 +1,20 @@
+{
+  "root": ".",
+  "edit": "data/edit.json",
+  "audio": "audio/source.wav",
+  "driver": "src/film.cjs",
+  "output": "production-motion",
+  "delivery": "production-motion/assembly.mp4",
+  "handles": 4,
+  "proof_start": 0,
+  "proof_duration": 4,
+  "source_files": [
+    "scripts/prepare.py"
+  ],
+  "renderer": "motion-canvas",
+  "motion_shots": {
+    "approach": "motion/approach/project.ts",
+    "bridge": "motion/bridge/project.ts",
+    "arrival": "motion/arrival/project.ts"
+  }
+}

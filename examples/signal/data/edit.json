@@ -1,0 +1,19 @@
+{
+  "title": "THE SIGNAL",
+  "fps": 24,
+  "width": 320,
+  "height": 180,
+  "frames": 96,
+  "palette": {"background": "#15283F", "track": "#F5E9CA", "signal": "#F3AE35", "answer": "#72C9B5"},
+  "creativePremise": "A signal reaches a broken track. A link closes, and the signal reaches the waiting receiver.",
+  "scenes": [
+    {"id": "approach", "kind": "approach", "start": 0, "end": 32, "name": "The break", "action": "A square travels along a track and stops at the gap."},
+    {"id": "bridge", "kind": "bridge", "start": 32, "end": 64, "name": "The link", "action": "A bridge extends across the gap while the square waits."},
+    {"id": "arrival", "kind": "arrival", "start": 64, "end": 96, "name": "The answer", "action": "The square crosses the bridge and the receiving circle lights up."}
+  ],
+  "events": [
+    {"id": "at-the-gap", "frame": 31, "basis": "action", "meaning": "The signal stops short of the break."},
+    {"id": "link-complete", "frame": 63, "basis": "action", "meaning": "The bridge completes the track."},
+    {"id": "received", "frame": 88, "basis": "action", "meaning": "The receiving circle answers."}
+  ]
+}

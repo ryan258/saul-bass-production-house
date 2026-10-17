@@ -1,0 +1,13 @@
+{
+  "root": "../../nonsense/unit-9/svg-film-v01",
+  "edit": "data/edit.json",
+  "audio": "../audio/unit-9.wav",
+  "driver": "src/film.cjs",
+  "master": "unit-9-svg-film-v01.mp4",
+  "output": "production",
+  "handles": 12,
+  "proof_start": 34.1,
+  "proof_duration": 15,
+  "timeline_file": "unit-9-human-edit.otio",
+  "verification": {"profile": "unit9"}
+}

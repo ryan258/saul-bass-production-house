@@ -1,0 +1,26 @@
+#!/bin/sh
+set -eu
+signal_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+signal_framework=${SBPH_HOME:-"$signal_dir/../.."}
+signal_project="$signal_dir/production.json"
+signal_command=${1:-build}
+if [ "$#" -gt 0 ]; then shift; fi
+case "$signal_command" in
+  motion-shots|motion-timeline|motion-assemble|motion-package|motion-validate)
+    exec "$signal_framework/sbph" "${signal_command#motion-}" "$signal_dir/production-motion.json" "$@"
+    ;;
+  prepare) exec "$signal_framework/.venv/bin/python" "$signal_dir/scripts/prepare.py" "$@" ;;
+  build)
+    "$signal_framework/.venv/bin/python" "$signal_dir/scripts/prepare.py"
+    "$signal_framework/sbph" proof "$signal_project"
+    "$signal_framework/sbph" shots "$signal_project"
+    "$signal_framework/sbph" timeline "$signal_project"
+    "$signal_framework/sbph" assemble "$signal_project"
+    "$signal_framework/sbph" check "$signal_project"
+    "$signal_framework/sbph" conform "$signal_project"
+    ;;
+  package|status|resume|animatic|revision|note|notes|resolve|reanchor|intent|doctor|proof|analyze|shots|timeline|assemble|validate|check|conform)
+    exec "$signal_framework/sbph" "$signal_command" "$signal_project" "$@"
+    ;;
+  *) printf '%s\n' 'Use: make build | prepare | status | resume | animatic | revision | note | notes | resolve | reanchor | intent | doctor | proof | shots | timeline | assemble | validate | check | conform | analyze | package | motion-shots | motion-timeline | motion-assemble | motion-validate | motion-package' >&2; exit 2 ;;
+esac
