@@ -83,7 +83,7 @@ def register(legacy_config,destination,output,refresh=False):
     native=relative(project)
     config={'root':root.name,'edit':'data/edit.json','audio':relative(legacy.audio),'output':relative(output),'delivery':relative(output/'assembly.mp4'),
         'renderer':'motion-canvas','handles':legacy.handles,'timeline_file':'unit-9-motion-human-edit.otio','source_globs':['data/**/*'],
-        'verification':{'profile':'generic'},'motion_shots':{s['id']:{'project':native,'startFrame':s['start']} for s in edit['scenes']},
+        'verification':{'profile':'generic','conform_first_frame_offset':1},'motion_shots':{s['id']:{'project':native,'startFrame':s['start']} for s in edit['scenes']},
         'motion_registration':{'schemaVersion':1,'profile':PROFILE,'project':native,'planSha256':sha(project.parent/'edit.json'),'cuesSha256':sha(cues),'renderSpecSha256':sha(project.parent/'proof.json'),'sourceAudioSha256':audio_hash}}
     target=root/'data/edit.json'
     if target.exists() or destination.exists():

@@ -161,4 +161,22 @@ class Unit9Profile(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'gap failed'):unit9_checks.inspect(p)
 
 
+class ConformFrames(unittest.TestCase):
+    scenes=[{'start':0,'end':10},{'start':10,'end':11}]
+
+    def test_default_samples_first_middle_and_last(self):
+        from sbph.assembly_check import conform_frames
+        self.assertEqual(conform_frames(self.scenes),[0,5,9,10])
+
+    def test_offset_lags_only_the_first_sample_and_stays_inside_the_shot(self):
+        from sbph.assembly_check import conform_frames
+        self.assertEqual(conform_frames(self.scenes,1),[1,5,9,10])
+        self.assertEqual(conform_frames(self.scenes,50),[5,9,10])
+
+    def test_offset_must_be_a_nonnegative_integer(self):
+        from sbph.assembly_check import conform_frames
+        for bad in (-1,1.5,'1',True):
+            with self.subTest(bad=bad),self.assertRaises(ValueError):conform_frames(self.scenes,bad)
+
+
 if __name__=='__main__':unittest.main()

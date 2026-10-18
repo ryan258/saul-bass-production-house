@@ -44,6 +44,18 @@ middle, and last editorial frame of every shot. Samples use an aspect-preserving
 editor acceptance. Regenerating a reference from current source is useful for
 render-path checks; it does not turn that reference into an approved prior cut.
 
+### When the reference lags at cuts
+
+A reference rendered as one continuous timeline can still show the *previous* shot on a shot's first frame, while the separately rendered, isolated shot correctly shows the new one. Unit 9's native full-film movie does this (its frame 3776 shows the preceding scene; the first visible frame is 3777). Measured on the 57-shot run: the mean RGB error was about 0.1/255 at start+1, middle, and last frames of every shot, but 40–150/255 on the first frame of most shots.
+
+Name the lag explicitly rather than loosening the threshold:
+
+```json
+{"verification": {"conform_first_frame_offset": 1}}
+```
+
+`conform` then compares each shot's frame `start + 1` instead of `start` (still inside the shot) and records `firstFrameOffset` in `assembly-verification.json`. Middle and last samples are unchanged. The Unit 9 native registration sets this to 1; the default is 0.
+
 ## Generic checks and reports
 
 The delivery must have the edit's dimensions, frame count, rate, and duration;

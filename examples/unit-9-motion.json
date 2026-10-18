@@ -11,7 +11,8 @@
     "data/**/*"
   ],
   "verification": {
-    "profile": "generic"
+    "profile": "generic",
+    "conform_first_frame_offset": 1
   },
   "motion_shots": {
     "01": {
