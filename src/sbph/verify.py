@@ -10,8 +10,39 @@ def decode_mono(path):
     raw=subprocess.check_output([binary('ffmpeg'),'-v','error','-i',str(path),'-ac','1','-ar','16000','-f','f32le','pipe:1'])
     return np.frombuffer(raw,dtype='<f4')
 
-def audio_comparison(source,delivered):
+
+def _decode_source_window(path,start,duration):
+    # Match proof encoding's source-time seek before resampling. Slicing a
+    # pre-resampled waveform would round fractional 16 kHz frame boundaries
+    # and introduce an artificial phase shift (e.g. frame 1 at 30 fps).
+    raw=subprocess.check_output([binary('ffmpeg'),'-v','error','-ss',str(float(start)),
+        '-i',str(path),'-t',str(float(duration)),'-ac','1','-ar','16000',
+        '-f','f32le','pipe:1'])
+    return np.frombuffer(raw,dtype='<f4')
+
+
+def audio_comparison(source,delivered,*,source_window=None):
+    """Compare all delivered audio against the full source or an explicit window.
+
+    Only the source is cropped. Extra delivered audio must remain visible to
+    the sample-count check, including when the original has an unused tail.
+    """
+    source_sha=sha(source)
     a,b=decode_mono(source),decode_mono(delivered)
+    source_samples=len(a);source_window_report=None
+    if source_window is not None:
+        start,duration=map(Fraction,source_window)
+        if start<0 or duration<=0:
+            raise ValueError('Source audio window must have a nonnegative start and positive duration')
+        first=round(start*16000);count=round(duration*16000)
+        if count<1:raise ValueError('Source audio window is shorter than one decoded sample')
+        if first+count>source_samples:
+            raise ValueError('Source audio is shorter than the requested editorial window')
+        a=_decode_source_window(source,start,duration) if start else a[:count]
+        if len(a)!=count:
+            raise ValueError('Source audio is shorter than the requested editorial window')
+        source_window_report={'startSeconds':float(start),'durationSeconds':float(duration),
+            'startSampleAt16k':first,'samplesAt16k':count}
     stream=next((s for s in probe(delivered)['streams'] if s['codec_type']=='audio'),None)
     if stream is None:raise ValueError('Delivery has no audio stream')
     # AAC may expose up to one padded 1024-sample packet after decoding.
@@ -52,7 +83,26 @@ def audio_comparison(source,delivered):
         if not offsets or any(abs(v['estimatedOffsetSamplesAt16k'])>1 or v['correlation']<=.995 for v in offsets):
             raise ValueError('Audio alignment failed: '+str(offsets))
         evidence='Correlation and duration-relative energetic windows checked at 16 kHz.'
-    return {'sourceSha256':sha(source),'monoCorrelationAt16k':correlation,'offsetWindows':offsets,'decodedSampleDifferenceAt16k':len(b)-len(a),'allowedSampleDifferenceAt16k':tolerance,'alignmentEvidence':evidence,'note':'AAC is lossy. Correlation does not assert bit-identical PCM; silence cannot establish temporal alignment.'}
+    try:source_unchanged=sha(source)==source_sha
+    except OSError as error:
+        raise RuntimeError('Source audio changed during comparison') from error
+    if not source_unchanged:raise RuntimeError('Source audio changed during comparison')
+    report={'sourceSha256':source_sha,'monoCorrelationAt16k':correlation,'offsetWindows':offsets,'decodedSampleDifferenceAt16k':len(b)-len(a),'allowedSampleDifferenceAt16k':tolerance,'alignmentEvidence':evidence,'note':'AAC is lossy. Correlation does not assert bit-identical PCM; silence cannot establish temporal alignment.'}
+    if source_window_report is not None:
+        report.update({'sourceWindow':source_window_report,'decodedSourceSamplesAt16k':source_samples,
+            'comparedSourceSamplesAt16k':len(a),'decodedDeliverySamplesAt16k':len(b)})
+    return report
+
+
+def project_audio_comparison(p,delivered,start=0,frames=None):
+    """Verify the edit's source-zero audio window, or a bounded proof interval."""
+    if frames is None:frames=p.frames-start
+    if type(start) is not int or type(frames) is not int or start<0 or frames<1 or start+frames>p.frames:
+        raise ValueError('Audio interval must be inside the editorial timeline')
+    report=audio_comparison(p.audio,delivered,
+        source_window=(Fraction(start,p.fps),Fraction(frames,p.fps)))
+    report['sourceWindow'].update({'startFrame':start,'frames':frames,'fps':p.fps})
+    return report
 
 def verify(p, delivery=None, profile=None):
     """Verify a configured delivery; creative checks are explicitly opt-in."""
@@ -91,7 +141,7 @@ def verify(p, delivery=None, profile=None):
         raise ValueError('Delivery audio must be 48 kHz stereo')
     if abs(float(sound.get('duration',-1))-p.frames/p.fps)>.022:
         raise ValueError('Delivery audio duration differs from edit')
-    audio=audio_comparison(p.audio,movie)
+    audio=project_audio_comparison(p,movie)
     shot_frames=[{'id':s['id'],'name':s['name'],'frame':(s['start']+s['end']-1)//2} for s in p.edit['scenes']]
     selected=sorted({s['frame'] for s in shot_frames}|{r['frame'] for r in references})
     review_folder=p.output/'review'

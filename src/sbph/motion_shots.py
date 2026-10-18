@@ -11,14 +11,21 @@ def export_body(p,project,work,count,start=0):
     # Work on a source copy: Motion Canvas may save .meta caches while rendering.
     copied=work/'source'
     shutil.copytree(project.parent,copied,ignore=shutil.ignore_patterns('node_modules','.git','.vite','__pycache__'))
+    from .motion_registration import isolate_registered_body
+    isolated=isolate_registered_body(p,copied,start,count)
     project=copied/project.name
     subprocess.run([binary('node'),str(FRAMEWORK/'motion-canvas/typecheck.mjs'),str(project)],check=True)
-    options={'width':p.width,'height':p.height,'fps':p.fps,'frames':count,'startFrame':start}
+    options={'width':p.width,'height':p.height,'fps':p.fps,'frames':count,'startFrame':0 if isolated else start}
     result=subprocess.run([binary('node'),str(FRAMEWORK/'motion-canvas/render.mjs'),'render',str(project),str(work),json.dumps(options)],capture_output=True,text=True)
     if result.returncode:raise RuntimeError('Motion shot render failed:\n'+result.stderr[-3000:]+'\n'+result.stdout[-3000:])
     records=[json.loads(line) for line in result.stdout.splitlines() if line.startswith('{')]
     if not records or records[-1].get('result')!=0 or records[-1].get('errors'):
         raise RuntimeError('Motion shot renderer did not report successful completion')
+    if isolated:
+        if records[-1].get('cutAudit')!={isolated:0}:raise RuntimeError('Isolated native shot cut audit failed')
+        files=sorted((work/'frames').glob('*.png'))
+        if [f.name for f in files]!=[f'{i:06}.png' for i in range(count)]:raise RuntimeError('Incomplete isolated native shot body')
+        for index,file in reversed(list(enumerate(files))):file.rename(file.with_name(f'{start+index:06}.png'))
 
 
 def render_shot(p,scene,destination):

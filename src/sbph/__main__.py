@@ -1,14 +1,18 @@
-import argparse,json,sys
+import argparse,json,subprocess,sys
 from pathlib import Path
 from .project import Project
 
 def main():
     parser=argparse.ArgumentParser(prog='sbph',description='Local video tools built on FFmpeg, librosa, and OpenTimelineIO.')
-    parser.add_argument('command',choices=['package','package-check','compare-return','status','resume','animatic','revision','note','notes','resolve','reanchor','intent','proof','motion-proof','motion-editor','motion-film','motion-film-editor','analyze','shots','timeline','assemble','validate','check','conform','doctor'])
+    parser.add_argument('command',choices=['package','package-check','compare-return','status','resume','animatic','revision','note','notes','resolve','reanchor','intent','proof','motion-proof','motion-editor','motion-film','motion-film-editor','analyze','shots','timeline','assemble','validate','check','conform','doctor','resolve-check','resolve-record'])
     parser.add_argument('project',help='production.json, or a handoff folder for package-check/compare-return')
+    parser.add_argument('--resolve-version',help='resolve-record: Resolve edition and version, such as "19.1 Free"')
+    for flag,text in [('imported','edit.otio imported without errors'),('linked','every clip online'),('markers-visible','markers visible where placed'),('audio-locked','original audio track locked')]:
+        parser.add_argument('--'+flag,action='store_true',help='resolve-record: confirm '+text)
     parser.add_argument('--out',help='New package folder or new comparison report file; existing paths are refused')
     parser.add_argument('--returned',help='Human editor return .otio file')
     parser.add_argument('--shot',action='append',help='Render only this shot ID; repeat for more than one')
+    parser.add_argument('--resume',action='store_true',dest='resume_shots',help='For shots: reuse only current clips that pass record, hash, range, and media checks')
     parser.add_argument('--start',type=float,help='Proof start in seconds (project proof_start, otherwise 0)')
     parser.add_argument('--duration',type=float,help='Proof length in seconds (project proof_duration, otherwise 15)')
     parser.add_argument('--delivery',help='Movie to check, relative to the film root or absolute')
@@ -30,6 +34,13 @@ def main():
     for field in ['goal','obstacle','change','emotion','framing','exit_condition']:
         parser.add_argument('--'+field.replace('_','-'),help='Optional shot intent: '+field.replace('_',' '))
     args=parser.parse_args()
+    if args.resume_shots and args.command!='shots':parser.error('--resume is only valid with shots')
+    if args.command in {'resolve-check','resolve-record'}:
+        from . import resolve as acceptance
+        if args.command=='resolve-check':result=acceptance.check(args.project)
+        else:result=acceptance.record(args.project,args.resolve_version,{'imported':args.imported,'linked':args.linked,'markersVisible':args.markers_visible,'audioLocked':args.audio_locked},args.returned,args.text)
+        print(json.dumps(result,indent=2) if args.json else acceptance.display(result))
+        return
     if args.command in {'package-check','compare-return'}:
         from .handoff import check_package
         if args.command=='package-check':
@@ -120,7 +131,7 @@ def main():
         analyze(p)
     elif args.command=='shots':
         from .media import render_shots
-        render_shots(p,set(args.shot) if args.shot else None)
+        render_shots(p,set(args.shot) if args.shot else None,resume=args.resume_shots)
     elif args.command=='timeline':
         from .timeline import timeline
         timeline(p)
@@ -135,9 +146,14 @@ def main():
         check(p,args.reference)
     else:
         import importlib.metadata,shutil
-        print(json.dumps({'project':str(p.config),'libraries':{n:importlib.metadata.version(n) for n in ['opentimelineio','ffmpeg-python','librosa','moviepy']},'binaries':{n:shutil.which(n) for n in ['node','ffmpeg','ffprobe']},'resolveDetected':any(Path(v).exists() for v in ['/Applications/DaVinci Resolve','/Applications/DaVinci Resolve.app',str(Path.home()/'Applications/DaVinci Resolve.app')]),'noExternalMediaCalls':True},indent=2))
+        from .resolve import detect as detect_resolve
+        print(json.dumps({'project':str(p.config),'libraries':{n:importlib.metadata.version(n) for n in ['opentimelineio','ffmpeg-python','librosa','moviepy']},'binaries':{n:shutil.which(n) for n in ['node','ffmpeg','ffprobe']},'resolve':detect_resolve(),'noExternalMediaCalls':True},indent=2))
 
 if __name__=='__main__':
     try:main()
+    except subprocess.CalledProcessError as e:
+        print(f'sbph: command failed ({e.returncode}): '+' '.join(map(str,e.cmd)),file=sys.stderr);sys.exit(1)
+    except KeyError as e:
+        print(f'sbph: missing required field {e} in the edit or configuration',file=sys.stderr);sys.exit(1)
     except (ValueError,RuntimeError,FileNotFoundError,AssertionError) as e:
         print('sbph: '+str(e),file=sys.stderr);sys.exit(1)

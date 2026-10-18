@@ -19,7 +19,7 @@ def build_model(p,records,candidates):
         clip.metadata['sbph']={'shot_id':s['id'],'media_sha256':r['sha256'],'action':s['action'],'handle_policy':r['handlePolicy'],'handle_in':r['handleIn'],'handle_out':r['handleOut']}
         v.append(clip)
     wav=otio.schema.ExternalReference(target_url=p.public_path(p.audio).as_uri(),available_range=TR(RT(0,p.fps),RT(p.frames,p.fps)))
-    a.append(otio.schema.Clip(name='Original full WAV / lock this track before timing edits',media_reference=wav,source_range=TR(RT(0,p.fps),RT(p.frames,p.fps))))
+    a.append(otio.schema.Clip(name='Original recording / editorial window / lock before timing edits',media_reference=wav,source_range=TR(RT(0,p.fps),RT(p.frames,p.fps))))
     a[0].metadata['sbph']={'media_sha256':sha(p.audio),'role':'original_audio'}
     for e in p.edit.get('events',[]):
         color=otio.schema.MarkerColor.GREEN if e['basis']=='accent' else otio.schema.MarkerColor.CYAN

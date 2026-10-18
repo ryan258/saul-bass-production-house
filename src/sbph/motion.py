@@ -1,11 +1,11 @@
 """Motion Canvas backend: official browser renderer, shared delivery encoding."""
 from pathlib import Path
-import hashlib, json, os, shutil, subprocess, time, wave
+import hashlib, json, os, shutil, subprocess, sys, tempfile, time, wave
 from fractions import Fraction
 import ffmpeg
 from PIL import Image, ImageDraw, ImageFont
 from .project import FRAMEWORK, binary, dump, sha
-from .media import COLOR, BSF, probe
+from .media import COLOR, BSF, probe, _run_ffmpeg, _promote_files
 from .fingerprint import BUILD_SCHEMA,browser_identity,digest
 
 
@@ -82,7 +82,8 @@ def comparison(baseline, new, output, work, spec):
     """Two pictures, one unchanged AAC track, labels outside the images."""
     header=work/'labels.png'
     im=Image.new('RGB',(1920,60),'#13252B');draw=ImageDraw.Draw(im)
-    font=ImageFont.truetype('/System/Library/Fonts/Supplemental/Arial Bold.ttf',24)
+    from .review import label_font
+    font=label_font(24)
     draw.text((24,16),'A  ORIGINAL SVG / SHARP',font=font,fill='#E7D9BB')
     draw.text((984,16),'B  MOTION CANVAS / NATIVE TWEENS',font=font,fill='#E7D9BB')
     im.save(header)
@@ -93,13 +94,22 @@ def comparison(baseline, new, output, work, spec):
     graph=ffmpeg.output(picture,ffmpeg.input(str(baseline)).audio,str(output),
         vcodec='libx264',crf=18,preset='medium',pix_fmt='yuv420p',r=spec['fps'],threads=6,
         acodec='copy',t=spec['frames']/spec['fps'],movflags='+faststart',**{'bsf:v':BSF},**COLOR)
-    ffmpeg.run(graph.global_args('-hide_banner','-loglevel','error','-filter_complex_threads','2'),cmd=binary('ffmpeg'),overwrite_output=True)
+    _run_ffmpeg(graph.global_args('-hide_banner','-loglevel','error','-filter_complex_threads','2'))
 
 
 def build(p, override=None, keep_frames=False):
-    project=source(p,override);spec=json.loads((project.parent/'proof.json').read_text())
+    project=source(p,override)
+    out=(p.output/'motion-canvas').resolve()
+    if out.is_relative_to(project.parent) or project.parent.is_relative_to(out):
+        raise ValueError('Keep Motion Canvas proof sources and output in separate folders')
     baseline=(p.root/p.data.get('motion_baseline','production/proof.mp4')).resolve()
+    final=out/'unit-9-shutdown-motion-canvas.mp4';compare=out/'unit-9-shutdown-comparison.mp4'
+    managed=[final,compare,out/'proof.json',out/'source-frames',out/'render-work']
+    for file in [Path(p.audio).resolve(),baseline,baseline.with_suffix('.json').resolve()]:
+        if any(file.is_relative_to(target.resolve()) for target in managed):
+            raise ValueError('Motion proof original audio and baseline must be outside managed output paths: '+str(file))
     initial_sources=motion_inventory(project)
+    spec=json.loads((project.parent/'proof.json').read_text())
     baseline_sha=sha(baseline)
     baseline_metadata_sha=sha(baseline.with_suffix('.json'))
     original_audio_sha=sha(p.audio)
@@ -109,65 +119,83 @@ def build(p, override=None, keep_frames=False):
     framework_sources={f:sha(FRAMEWORK/f) for f in ['motion-canvas/render.mjs','motion-canvas/render.html','motion-canvas/vite.config.ts','motion-canvas/typecheck.mjs']}
     browser=browser_identity()
     motion_fingerprint=digest({'build':build_fingerprint,'sources':{str(f):value for f,value in initial_sources.items()},'framework':framework_sources,'baseline':baseline_sha,'baselineMetadata':baseline_metadata_sha,'browser':browser})
-    subprocess.run([binary('node'),str(FRAMEWORK/'motion-canvas/typecheck.mjs'),str(project)],check=True)
-    out=p.output/'motion-canvas';out.mkdir(parents=True,exist_ok=True)
-    work=out/'render-work'
-    if work.exists():shutil.rmtree(work)
-    work.mkdir()
+    def check_sources():
+        if sha(baseline)!=baseline_sha or sha(baseline.with_suffix('.json'))!=baseline_metadata_sha:
+            raise RuntimeError('Original proof or baseline metadata changed')
+        if sha(p.audio)!=original_audio_sha:raise RuntimeError('Original WAV changed')
+        if motion_inventory(project)!=initial_sources:
+            raise RuntimeError('Motion Canvas source or cue metadata changed during rendering')
+        if p.source_inventory()[0]!=build_fingerprint or any(sha(FRAMEWORK/f)!=value for f,value in framework_sources.items()) or browser_identity()!=browser:
+            raise RuntimeError('Production configuration, framework, or tools changed during Motion Canvas delivery')
+
+    out.mkdir(parents=True,exist_ok=True)
+    stage=Path(tempfile.mkdtemp(prefix='.proof-build-',dir=out)).resolve()
     began=time.perf_counter()
-    subprocess.run([binary('node'),str(FRAMEWORK/'motion-canvas/render.mjs'),'render',str(project),str(work)],check=True)
-    if motion_inventory(project)!=initial_sources:raise RuntimeError('Motion Canvas source or cue metadata changed during rendering')
-    if p.source_inventory()[0]!=build_fingerprint or any(sha(FRAMEWORK/f)!=value for f,value in framework_sources.items()):
-        raise RuntimeError('Production configuration, framework, or tools changed during Motion Canvas rendering')
-    frames=sorted((work/'frames').glob('*.png'))
-    if [f.name for f in frames]!=[f'{i:06}.png' for i in range(spec['frames'])]:
-        raise RuntimeError(f'Incomplete Motion Canvas sequence: {len(frames)} frames')
-    picture=out/'picture.mp4';final=out/'unit-9-shutdown-motion-canvas.mp4'
-    video=ffmpeg.input(str(work/'frames/%06d.png'),framerate=spec['fps']).video.filter('scale',out_color_matrix='bt709',out_range='tv')
-    graph=ffmpeg.output(video,str(picture),vcodec='libx264',crf=17,preset='medium',pix_fmt='yuv420p',r=spec['fps'],threads=6,g=spec['fps'],**COLOR)
-    ffmpeg.run(graph.global_args('-hide_banner','-loglevel','error'),cmd=binary('ffmpeg'),overwrite_output=True)
-    graph=ffmpeg.output(ffmpeg.input(str(picture)).video,ffmpeg.input(str(baseline)).audio,str(final),
-        vcodec='copy',acodec='copy',t=spec['frames']/spec['fps'],movflags='+faststart',**{'bsf:v':BSF},**COLOR)
-    ffmpeg.run(graph.global_args('-hide_banner','-loglevel','error'),cmd=binary('ffmpeg'),overwrite_output=True)
-    picture.unlink()
-    compare=out/'unit-9-shutdown-comparison.mp4'
-    comparison(baseline,final,compare,work,spec)
-    decoded_hash=hashlib.sha256(pcm(baseline)).hexdigest()
-    for file in [final,compare]:
-        streams=probe(file)['streams'];v=next(s for s in streams if s['codec_type']=='video')
-        if int(v.get('nb_frames',-1))!=spec['frames'] or v['avg_frame_rate']!=f"{spec['fps']}/1":
-            raise RuntimeError('Delivery frame count/rate mismatch')
-        expected_size=(spec['width'],spec['height']) if file==final else (1920,600)
-        if (v['width'],v['height'])!=expected_size:raise RuntimeError('Delivery size mismatch')
-        expected_color={'color_primaries':'bt709','color_transfer':'iec61966-2-1','color_space':'bt709','color_range':'tv'}
-        if any(v.get(k)!=value for k,value in expected_color.items()):raise RuntimeError('Delivery color tags mismatch')
-        if hashlib.sha256(pcm(file)).hexdigest()!=decoded_hash:raise RuntimeError('Comparison audio changed')
-    if sha(baseline)!=baseline_sha or sha(baseline.with_suffix('.json'))!=baseline_metadata_sha:raise RuntimeError('Original proof or baseline metadata changed')
-    if sha(p.audio)!=original_audio_sha:raise RuntimeError('Original WAV changed')
-    if motion_inventory(project)!=initial_sources:raise RuntimeError('Motion Canvas source or cue metadata changed during rendering')
-    if p.source_inventory()[0]!=build_fingerprint or any(sha(FRAMEWORK/f)!=value for f,value in framework_sources.items()) or browser_identity()!=browser:
-        raise RuntimeError('Production configuration, framework, or tools changed during Motion Canvas delivery')
-    record={
-        'schemaVersion':BUILD_SCHEMA,'sourceFingerprint':motion_fingerprint,'buildInventory':build_inventory,'browserIdentity':browser,
-        'engine':'Motion Canvas 3.17.2 / official Renderer + ImageExporter',
-        'file':str(p.public_path(final)), 'comparison':str(p.public_path(compare)),
-        'sha256':sha(final),'comparisonSha256':sha(compare), 'baselineSha256':baseline_sha,
-        'sourceAudioSha256':original_audio_sha,
-        'baselineMetadataSha256':baseline_metadata_sha,'baselineAudioVerification':baseline_audio,
-        'sourceStartFrame':spec['sourceStartFrame'],'frames':spec['frames'],'fps':spec['fps'],
-        'duration':spec['frames']/spec['fps'],'cuts':spec['cuts'],
-        'editorWavPcmSha256':cropped_pcm_sha,'decodedDeliveryPcmSha256':decoded_hash,
-        'audio':'AAC track stream-copied from original proof; decoded PCM identical in A, B and comparison.',
-        'color':COLOR,'renderAndEncodeSeconds':round(time.perf_counter()-began,3),
-        'creativeDifferences':spec['notes'],
-        'sourceInventory':[{'file':str(f.relative_to(project.parent)),'sha256':initial_sources[f]} for f in sorted(initial_sources)],
-        'frameworkInventory':[{'file':f,'sha256':sha(FRAMEWORK/f)} for f in ['motion-canvas/render.mjs','motion-canvas/render.html','motion-canvas/vite.config.ts','motion-canvas/typecheck.mjs','src/sbph/motion.py','package-lock.json']],
-    }
-    dump(out/'proof.json',record)
-    # Keep useful source frames for inspection without retaining 450 PNGs.
-    qa=out/'source-frames';qa.mkdir(exist_ok=True)
-    for index in [0,75,87,99,141,188,210,231,267,312,366,449]:
-        shutil.copy2(frames[index],qa/frames[index].name)
-    if not keep_frames:shutil.rmtree(work)
+    try:
+        copied=stage/'source'
+        shutil.copytree(project.parent,copied,ignore=shutil.ignore_patterns('node_modules','.git','.vite','__pycache__'))
+        copied_project=copied/project.name
+        original={str(f.relative_to(project.parent)):value for f,value in initial_sources.items()}
+        if {str(f.relative_to(copied)):value for f,value in motion_inventory(copied_project).items()}!=original:
+            raise RuntimeError('Motion Canvas source changed while taking render snapshot')
+        subprocess.run([binary('node'),str(FRAMEWORK/'motion-canvas/typecheck.mjs'),str(copied_project)],check=True)
+        work=stage/'render-work';work.mkdir()
+        subprocess.run([binary('node'),str(FRAMEWORK/'motion-canvas/render.mjs'),'render',str(copied_project),str(work)],check=True)
+        check_sources()
+        frames=sorted((work/'frames').glob('*.png'))
+        if [f.name for f in frames]!=[f'{i:06}.png' for i in range(spec['frames'])]:
+            raise RuntimeError(f'Incomplete Motion Canvas sequence: {len(frames)} frames')
+        picture=stage/'picture.mp4';candidate=stage/final.name;candidate_compare=stage/compare.name
+        video=ffmpeg.input(str(work/'frames/%06d.png'),framerate=spec['fps']).video.filter('scale',out_color_matrix='bt709',out_range='tv')
+        graph=ffmpeg.output(video,str(picture),vcodec='libx264',crf=17,preset='medium',pix_fmt='yuv420p',r=spec['fps'],threads=6,g=spec['fps'],**COLOR)
+        _run_ffmpeg(graph.global_args('-hide_banner','-loglevel','error'))
+        graph=ffmpeg.output(ffmpeg.input(str(picture)).video,ffmpeg.input(str(baseline)).audio,str(candidate),
+            vcodec='copy',acodec='copy',t=spec['frames']/spec['fps'],movflags='+faststart',**{'bsf:v':BSF},**COLOR)
+        _run_ffmpeg(graph.global_args('-hide_banner','-loglevel','error'))
+        comparison(baseline,candidate,candidate_compare,work,spec)
+        decoded_hash=hashlib.sha256(pcm(baseline)).hexdigest()
+        for file in [candidate,candidate_compare]:
+            streams=probe(file)['streams'];v=next(s for s in streams if s['codec_type']=='video')
+            if int(v.get('nb_frames',-1))!=spec['frames'] or v['avg_frame_rate']!=f"{spec['fps']}/1":
+                raise RuntimeError('Delivery frame count/rate mismatch')
+            expected_size=(spec['width'],spec['height']) if file==candidate else (1920,600)
+            if (v['width'],v['height'])!=expected_size:raise RuntimeError('Delivery size mismatch')
+            expected_color={'color_primaries':'bt709','color_transfer':'iec61966-2-1','color_space':'bt709','color_range':'tv'}
+            if any(v.get(k)!=value for k,value in expected_color.items()):raise RuntimeError('Delivery color tags mismatch')
+            if hashlib.sha256(pcm(file)).hexdigest()!=decoded_hash:raise RuntimeError('Comparison audio changed')
+        qa=stage/'source-frames';qa.mkdir()
+        selected=sorted({len(frames)-1}|{i for i in [0,75,87,99,141,188,210,231,267,312,366,449] if i<len(frames)})
+        for index in selected:shutil.copy2(frames[index],qa/frames[index].name)
+        check_sources()
+        record={
+            'schemaVersion':BUILD_SCHEMA,'sourceFingerprint':motion_fingerprint,'buildInventory':build_inventory,'browserIdentity':browser,
+            'engine':'Motion Canvas 3.17.2 / official Renderer + ImageExporter',
+            'file':str(p.public_path(final)), 'comparison':str(p.public_path(compare)),
+            'sha256':sha(candidate),'comparisonSha256':sha(candidate_compare), 'baselineSha256':baseline_sha,
+            'sourceAudioSha256':original_audio_sha,
+            'baselineMetadataSha256':baseline_metadata_sha,'baselineAudioVerification':baseline_audio,
+            'sourceStartFrame':spec['sourceStartFrame'],'frames':spec['frames'],'fps':spec['fps'],
+            'duration':spec['frames']/spec['fps'],'cuts':spec['cuts'],
+            'editorWavPcmSha256':cropped_pcm_sha,'decodedDeliveryPcmSha256':decoded_hash,
+            'audio':'AAC track stream-copied from original proof; decoded PCM identical in A, B and comparison.',
+            'color':COLOR,'renderAndEncodeSeconds':round(time.perf_counter()-began,3),
+            'creativeDifferences':spec['notes'],
+            'sourceInventory':[{'file':str(f.relative_to(project.parent)),'sha256':initial_sources[f]} for f in sorted(initial_sources)],
+            'frameworkInventory':[{'file':f,'sha256':sha(FRAMEWORK/f)} for f in ['motion-canvas/render.mjs','motion-canvas/render.html','motion-canvas/vite.config.ts','motion-canvas/typecheck.mjs','src/sbph/motion.py','package-lock.json']],
+            'sourceFrames':[{'file':'source-frames/'+f.name,'sha256':sha(f)} for f in sorted(qa.glob('*.png'))],
+            'retainedRenderWork':keep_frames,
+        }
+        receipt=stage/'proof.json';dump(receipt,record)
+        check_sources()
+        pairs=[(candidate,final),(candidate_compare,compare),(receipt,out/'proof.json'),(qa,out/'source-frames')]
+        if keep_frames:pairs.append((work,out/'render-work'))
+        _promote_files(pairs,stage,remove=() if keep_frames else (out/'render-work',))
+    except BaseException:
+        print('Motion proof failed; diagnostic work retained: '+str(stage),file=sys.stderr)
+        raise
+    else:
+        try:shutil.rmtree(stage)
+        except BaseException:
+            print('Motion proof delivered; temporary work could not be removed: '+str(stage),file=sys.stderr)
     print(json.dumps({key:record[key] for key in ['file','comparison','frames','fps','duration','audio','renderAndEncodeSeconds']},indent=2))
     return final

@@ -27,6 +27,70 @@ def digest(data):
     return hashlib.sha256(json.dumps(data,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
 
 
+def _specification_changes(before,after,prefix=''):
+    """Explain nested render settings without flattening away their names."""
+    if isinstance(before,dict) and isinstance(after,dict):
+        changes=[]
+        for key in sorted(set(before)|set(after)):
+            field=prefix+'.'+key if prefix else key
+            if key not in before:changes.append({'field':field,'change':'added','after':after[key]})
+            elif key not in after:changes.append({'field':field,'change':'removed','before':before[key]})
+            else:changes.extend(_specification_changes(before[key],after[key],field))
+        return changes
+    if type(before) is type(after) and before==after:return []
+    return [{'field':prefix,'change':'changed','before':before,'after':after}]
+
+
+def inventory_changes(previous,current):
+    """Return read-only, structured differences from a saved build inventory.
+
+    Files have added/removed/changed identities. The specification also has
+    field-level differences, including browser, tool, and setting changes.
+    Missing or malformed historical evidence is reported instead of guessed.
+    """
+    def rows(value):
+        if not isinstance(value,list):return None
+        result={}
+        for row in value:
+            if not isinstance(row,dict) or not isinstance(row.get('file'),str) or not isinstance(row.get('sha256'),str) or row['file'] in result:return None
+            result[row['file']]=row
+        return result
+    before=rows(previous);after=rows(current)
+    if before is None or after is None:
+        return [{'file':'sourceInventory','change':'unavailable','reason':'Saved source inventory is missing or malformed; exact prior inputs cannot be compared.'}]
+    changes=[]
+    for file in sorted(set(before)|set(after)):
+        if file not in before:changes.append({'file':file,'change':'added','after':after[file]['sha256']})
+        elif file not in after:changes.append({'file':file,'change':'removed','before':before[file]['sha256']})
+        elif before[file]!=after[file]:
+            change={'file':file,'change':'changed','before':before[file]['sha256'],'after':after[file]['sha256']}
+            if file=='build:specification' and 'specification' in before[file] and 'specification' in after[file]:
+                change['details']=_specification_changes(before[file]['specification'],after[file]['specification'])
+            changes.append(change)
+    return changes
+
+
+def format_inventory_changes(changes,limit=None):
+    """Readable diagnostic lines; structured records retain complete values."""
+    def value(item):
+        if isinstance(item,str):return item
+        return json.dumps(item,sort_keys=True,ensure_ascii=False)
+    lines=[]
+    for row in changes:
+        if row['change']=='unavailable':lines.append(row['reason']);continue
+        details=row.get('details')
+        if details:
+            for detail in details:
+                name=row['file']+'.'+detail['field']
+                if detail['change']=='added':lines.append('Added '+name+': '+value(detail['after']))
+                elif detail['change']=='removed':lines.append('Removed '+name+': '+value(detail['before']))
+                else:lines.append('Changed '+name+': '+value(detail['before'])+' -> '+value(detail['after']))
+        else:lines.append(row['change'].capitalize()+' '+row['file'])
+    if limit is not None and len(lines)>limit:
+        return lines[:limit]+[f'{len(lines)-limit} more changes; use status --json for the complete inventory difference.']
+    return lines
+
+
 def tool_identity(name):
     path=Path(binary(name)).resolve();stat=path.stat()
     # Flag selection depends on the tool, not the executable's filename (which

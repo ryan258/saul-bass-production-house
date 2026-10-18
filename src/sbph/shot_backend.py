@@ -10,6 +10,8 @@ def backend(p):
 
 
 def motion_projects(p):
+    from .motion_registration import validate_registration
+    validate_registration(p)
     mapping=p.data.get('motion_shots')
     if not isinstance(mapping,dict) or set(mapping)!={s['id'] for s in p.edit['scenes']}:
         raise ValueError('motion_shots must map every shot ID to a project.ts or explicit project window')

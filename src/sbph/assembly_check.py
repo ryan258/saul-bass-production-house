@@ -3,7 +3,7 @@ import subprocess,json
 from fractions import Fraction
 import numpy as np
 from .media import probe
-from .verify import audio_comparison
+from .verify import project_audio_comparison
 from .project import binary,dump,sha
 
 def sample(path,frames,size=(512,288)):
@@ -21,7 +21,7 @@ def sample(path,frames,size=(512,288)):
 def check(p,reference_override=None):
     from .validation import validate_shot_set
     from .delivery import reference_path
-    validate_shot_set(p)
+    records=validate_shot_set(p)
     assembled=p.output/'assembly.mp4';reference=reference_path(p,reference_override)
     assembly_hash=sha(assembled);reference_hash=sha(reference)
     for file in [assembled,reference]:
@@ -33,8 +33,10 @@ def check(p,reference_override=None):
     a=sample(reference,frames,size);b=sample(assembled,frames,size)
     errors=[float(np.abs(a[i].astype(np.int16)-b[i].astype(np.int16)).mean()) for i in range(len(frames))]
     if max(errors)>=2:raise ValueError(f'Assembly picture differs from reference at frame {frames[errors.index(max(errors))]}: {max(errors)}')
-    audio=audio_comparison(p.audio,assembled)
+    audio=project_audio_comparison(p,assembled)
     if sha(assembled)!=assembly_hash or sha(reference)!=reference_hash:raise RuntimeError('Conform movies changed during verification')
-    report={'status':'passed','assembly':str(p.public_path(assembled)),'sha256':assembly_hash,'frames':p.frames,'reference':str(p.public_path(reference)),'referenceSha256':reference_hash,'comparedFrames':frames,'sampleSize':list(size),'method':'First, middle, and final editorial frame of every shot, decoded at an aspect-preserving 512-pixel width using explicit color matrix/range.','maximumRgbMae':max(errors),'meanRgbMae':float(np.mean(errors)),'audio':audio,'limit':'This confirms the generated assembly conforms to the explicitly selected viewing reference at sampled editorial boundaries. It does not replace native editor import or a full human screening.'}
+    report={'status':'passed','assembly':str(p.public_path(assembled)),'sha256':assembly_hash,'sourceFingerprint':records['sourceFingerprint'],'frames':p.frames,'reference':str(p.public_path(reference)),'referenceSha256':reference_hash,'comparedFrames':frames,'sampleSize':list(size),'method':'First, middle, and final editorial frame of every shot, decoded at an aspect-preserving 512-pixel width using explicit color matrix/range.','maximumRgbMae':max(errors),'meanRgbMae':float(np.mean(errors)),'audio':audio,'limit':'This confirms the generated assembly conforms to the explicitly selected viewing reference at sampled editorial boundaries. It does not replace native editor import or a full human screening.'}
+    if p.source_inventory()[0]!=records['sourceFingerprint'] or sha(p.audio)!=audio['sourceSha256']:
+        raise RuntimeError('Build sources changed during conform verification')
     dump(p.output/'assembly-verification.json',report);print(f"Assembly conforms: {len(frames)} boundary/midpoint samples; maximum RGB error {max(errors):.3f}; audio checks complete.")
     return report

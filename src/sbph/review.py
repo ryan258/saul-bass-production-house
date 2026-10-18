@@ -8,6 +8,13 @@ from PIL import Image,ImageDraw,ImageFont
 from .project import binary
 
 
+def label_font(size):
+    """Arial Bold where macOS provides it; Pillow's built-in font everywhere else."""
+    for name in ['/System/Library/Fonts/Supplemental/Arial Bold.ttf','/Library/Fonts/Arial Bold.ttf']:
+        if Path(name).is_file():return ImageFont.truetype(name,size)
+    return ImageFont.load_default(size=size)
+
+
 def decode_frames(movie, frames, folder):
     def expression(values):
         if len(values)==1:return f'eq(n,{values[0]})'

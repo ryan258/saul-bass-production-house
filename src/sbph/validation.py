@@ -43,7 +43,6 @@ def validate_shot_set(p):
     Used before assembly, interchange, conform, or delivery verification writes
     anything. Legacy manifests are preserved, but require a deliberate rebuild.
     """
-    from .media import probe
     validate_edit(p)
     path=p.output/'shots.json'
     if not path.is_file():raise ValueError('Shot manifest is missing; render shots first')
@@ -53,7 +52,10 @@ def validate_shot_set(p):
         raise ValueError('Legacy shot manifest: rebuild all shots with build schema 2; existing outputs have not been changed')
     fingerprint,inventory=p.source_inventory()
     if manifest.get('sourceFingerprint')!=fingerprint or manifest.get('sourceInventory')!=inventory:
-        raise ValueError('Stale shot build: configuration, sources, or tools changed; refresh all shots')
+        from .fingerprint import inventory_changes,format_inventory_changes
+        changes=inventory_changes(manifest.get('sourceInventory'),inventory)
+        detail='; '.join(format_inventory_changes(changes,limit=8))
+        raise ValueError('Stale shot build: '+(detail or 'build fingerprint changed')+'; refresh shots with shots --resume before export')
     from .shot_backend import renderer_record
     if manifest.get('fps')!=p.fps or manifest.get('sourceEditSha256')!=sha(p.root/p.data.get('edit','data/edit.json')) or any(manifest.get(k)!=v for k,v in renderer_record(p).items()):
         raise ValueError('Shot manifest does not match the current edit or renderer')
@@ -61,26 +63,39 @@ def validate_shot_set(p):
     if not isinstance(records,dict) or set(records)!={s['id'] for s in p.edit['scenes']}:
         raise ValueError('Shot set is incomplete or contains unexpected shots; render all required shots')
     for scene in p.edit['scenes']:
-        row=records[scene['id']];body=scene['end']-scene['start']
-        expected={'frames':body+2*p.handles,'bodyFrames':body,'handleIn':p.handles,'handleOut':p.handles,'sourceStart':p.handles,'timelineStart':scene['start'],'fps':p.fps}
-        if not isinstance(row,dict):raise ValueError('Malformed shot record: '+scene['id'])
-        if row.get('id')!=scene['id'] or row.get('sourceFingerprint')!=fingerprint:
-            raise ValueError('Stale shot '+scene['id'])
-        if any(type(row.get(k)) is not int or row[k]!=value for k,value in expected.items()):
-            raise ValueError('Invalid frame/handle ranges for shot '+scene['id'])
-        if not isinstance(row.get('handlePolicy'),str):raise ValueError('Missing handle policy for shot '+scene['id'])
-        filename=f"{scene['id']}-{scene['kind']}.mp4"
-        if not isinstance(row.get('file'),str) or Path(row['file']).name!=filename:
-            raise ValueError('Unexpected media filename for shot '+scene['id'])
-        file=p.output/'shots'/filename
-        if not file.is_file() or sha(file)!=row.get('sha256'):
-            raise ValueError('Missing or changed media: '+str(file))
-        video=next((s for s in probe(file)['streams'] if s['codec_type']=='video'),None)
-        if video is None:raise ValueError('Missing video stream: '+str(file))
-        if int(video.get('nb_frames',-1))!=expected['frames'] or Fraction(video['avg_frame_rate'])!=p.fps or (video['width'],video['height'])!=(p.width,p.height):
-            raise ValueError('Shot media metadata differs from the build contract: '+scene['id'])
+        validate_shot_record(p,scene,records[scene['id']],fingerprint)
     validate_source_audio(p)
     return manifest
+
+
+def validate_shot_record(p,scene,row,fingerprint,movie=None):
+    """The same record/media gate is used for reuse and complete-set export."""
+    from .media import probe
+    body=scene['end']-scene['start']
+    expected={'frames':body+2*p.handles,'bodyFrames':body,'handleIn':p.handles,
+        'handleOut':p.handles,'sourceStart':p.handles,'timelineStart':scene['start'],'fps':p.fps}
+    if not isinstance(row,dict):raise ValueError('Malformed shot record: '+scene['id'])
+    if row.get('id')!=scene['id'] or row.get('sourceFingerprint')!=fingerprint:
+        raise ValueError('Stale shot '+scene['id'])
+    if any(type(row.get(k)) is not int or row[k]!=value for k,value in expected.items()):
+        raise ValueError('Invalid frame/handle ranges for shot '+scene['id'])
+    if not isinstance(row.get('handlePolicy'),str):raise ValueError('Missing handle policy for shot '+scene['id'])
+    filename=f"{scene['id']}-{scene['kind']}.mp4"
+    if not isinstance(row.get('file'),str) or Path(row['file']).name!=filename:
+        raise ValueError('Unexpected media filename for shot '+scene['id'])
+    file=Path(movie) if movie is not None else p.output/'shots'/filename
+    if not file.is_file() or sha(file)!=row.get('sha256'):
+        raise ValueError('Missing or changed media: '+str(file))
+    try:
+        video=next((s for s in probe(file)['streams'] if s['codec_type']=='video'),None)
+        valid=video is not None and int(video.get('nb_frames',-1))==expected['frames'] \
+            and Fraction(video['avg_frame_rate'])==p.fps \
+            and (video['width'],video['height'])==(p.width,p.height)
+    except (KeyError,TypeError,ValueError,ZeroDivisionError) as error:
+        raise ValueError('Unverifiable shot media metadata: '+scene['id']) from error
+    if not valid:raise ValueError('Shot media metadata differs from the build contract: '+scene['id'])
+    if sha(file)!=row['sha256']:raise ValueError('Shot media changed during validation: '+scene['id'])
+    return row
 
 
 def audio_cues(p):

@@ -5,7 +5,7 @@ import shlex
 import subprocess
 
 from .project import FRAMEWORK,sha
-from .fingerprint import BUILD_SCHEMA
+from .fingerprint import BUILD_SCHEMA,inventory_changes,format_inventory_changes
 from .delivery import delivery_path
 from . import workflow as flow
 
@@ -38,14 +38,18 @@ def shot_build(p):
         if not isinstance(data,dict):raise ValueError('manifest must be an object')
         if data.get('schemaVersion')!=BUILD_SCHEMA:
             return {'status':'legacy','reason':'Preserved manifest predates the current build schema; no automatic rebuild.','productionValidation':'not run'}
-        fingerprint,_=p.source_inventory()
-        if data.get('sourceFingerprint')!=fingerprint:return {'status':'stale','reason':'Configured sources, settings, or tools changed.','productionValidation':'not run'}
+        fingerprint,inventory=p.source_inventory()
+        if data.get('sourceFingerprint')!=fingerprint or ('sourceInventory' in data and data['sourceInventory']!=inventory):
+            changes=inventory_changes(data.get('sourceInventory'),inventory)
+            return {'status':'stale','reason':'Configured sources, settings, or tools changed.',
+                'staleChanges':changes,'productionValidation':'not run'}
         records=data.get('shots',{})
         if not isinstance(records,dict) or set(records)!={s['id'] for s in p.edit['scenes']}:
             return {'status':'incomplete','reason':'Not every current shot has a record.','productionValidation':'not run'}
         changed=[]
         for scene in p.edit['scenes']:
             row=records[scene['id']];movie=p.output/'shots'/f"{scene['id']}-{scene['kind']}.mp4"
+            if not isinstance(row,dict):raise ValueError('Malformed shot record: '+scene['id'])
             if not movie.is_file() or sha(movie)!=row.get('sha256'):changed.append(scene['id'])
         return {'status':'changed' if changed else 'matches','changedShots':changed,
             'reason':'Source fingerprint and clip hashes checked; ranges and media metadata require validate.','productionValidation':'not run'}
@@ -60,12 +64,15 @@ def delivery(p):
     if not movie.is_file() or not report_file.is_file():return result
     try:
         report=json.loads(report_file.read_text())
+        if not isinstance(report,dict):raise ValueError('Delivery report must be an object')
         expected=report.get('deliverySha256',report.get('masterSha256'))
         reported=report.get('delivery',report.get('master'))
+        if expected is not None and not isinstance(expected,str):raise ValueError('Delivery report hash must be text')
+        if reported is not None and (not isinstance(reported,str) or not reported):raise ValueError('Delivery report path must be non-empty text')
         same=reported is not None and Path(reported).resolve()==movie.resolve()
         result['verification']='saved report matches movie bytes' if same and expected==sha(movie) else 'saved report is for different or changed media'
         result['limit']='Historical report identity only; this command does not repeat its media checks.'
-    except (ValueError,OSError,AttributeError) as error:result['verification']='unreadable report: '+str(error)
+    except (ValueError,OSError,AttributeError,TypeError) as error:result['verification']='unreadable report: '+str(error)
     return result
 
 
@@ -105,7 +112,7 @@ def snapshot(p):
         next_action={'text':saved['text'],'command':None}
     elif open_notes:
         next_action={'text':'Review unresolved note anchors before choosing a preview.','command':command(p,'notes')}
-    elif not p.driver.is_file():
+    elif p.data.get('renderer')!='motion-canvas' and not p.driver.is_file():
         next_action={'text':'Block out the story with placeholder cards; the renderer is not available yet.','command':command(p,'animatic')}
     else:
         scene=p.edit['scenes'][0]
@@ -122,6 +129,8 @@ def display(data,brief=False):
         'Next: '+data['nextAction']['text']]
     if data['nextAction']['command']:lines.append(data['nextAction']['command'])
     lines.append('Handled build: '+data['build']['status']+' — '+data['build']['reason'])
+    for change in format_inventory_changes(data['build'].get('staleChanges',[]),limit=6 if brief else 12):
+        lines.append('  '+change)
     lines.append('Delivery: '+data['delivery']['file']+(' (present)' if data['delivery']['exists'] else ' (missing)'))
     if data['checkpoint']:lines.append('Saved checkpoint: '+data['checkpoint']['text'])
     lines.append(f"Open notes: {len(data['openNotes'])}")

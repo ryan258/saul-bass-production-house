@@ -1,6 +1,7 @@
 """Read-only editorial comparison against an immutable collected handoff."""
 from collections import Counter, defaultdict
 from pathlib import Path
+from pathlib import PurePosixPath
 from urllib.parse import unquote,urlsplit
 import math
 import opentimelineio as otio
@@ -16,6 +17,13 @@ def local_media(url,timeline_file):
     return file if file.is_absolute() else Path(timeline_file).parent/file
 
 
+def relinked(folder,url,manifest):
+    """An editor on another machine exports absolute paths (even C:\\...). Find the collected file by its unique name."""
+    name=PurePosixPath(unquote(urlsplit(url).path).replace('\\','/')).name
+    found=[Path(folder)/row['file'] for row in manifest['media'] if PurePosixPath(row['file']).name==name]
+    return found[0] if len(found)==1 and found[0].is_file() else None
+
+
 def frame(time,fps):
     value=time.rescaled_to(fps).value
     if not math.isfinite(value):raise ValueError('Non-finite editorial time')
@@ -24,7 +32,7 @@ def frame(time,fps):
     return rounded
 
 
-def inspect(tl,file,manifest,baseline=False):
+def inspect(tl,file,manifest,baseline=False,folder=None):
     fps=manifest['fps'];known=manifest['media'];rows=[];issues=[];gaps=[];structure=[]
     counts=Counter();by_hash=defaultdict(list)
     for row in known:by_hash[row['sha256']].append(row)
@@ -64,6 +72,7 @@ def inspect(tl,file,manifest,baseline=False):
             if declared is not None and not isinstance(declared,str):
                 problem('unmatched',where,'Malformed retained media identity');declared=None
             media=local_media(item.media_reference.target_url,file)
+            if folder is not None and (media is None or not media.is_file()):media=relinked(folder,item.media_reference.target_url,manifest) or media
             actual=sha(media) if media is not None and media.is_file() else None
             if not baseline and actual is None:problem('unverified_media',where,'Media is unavailable locally; relink before accepting the return')
             if actual and declared and actual!=declared:problem('media_changed',where,'Returned media bytes differ from retained clip identity')
@@ -94,7 +103,7 @@ def compare(folder,returned):
     original_hash=sha(returned)
     edited=otio.adapters.read_from_file(str(returned),adapter_name='otio_json')
     before=inspect(baseline,Path(folder)/manifest['timeline'],manifest,True)
-    after=inspect(edited,returned,manifest)
+    after=inspect(edited,returned,manifest,folder=folder)
     if before['issues']:raise ValueError('Baseline package timeline is not a supported comparison baseline')
     old=defaultdict(list);new=defaultdict(list)
     for row in before['clips']:old[row['key']].append(row)
@@ -130,8 +139,11 @@ def compare(folder,returned):
 def display(report):
     lines=[f"Editor return: {report['status']} / {report['beforeFrames']} → {report['afterFrames']} frames at {report['fps']} fps",
         f"Original audio placement and bytes: {'preserved' if report['originalAudioPreserved'] else 'requires review'}"]
+    def brief(tracks):return ', '.join(f"{t['track']} ({len(t['markers'])} markers)" for t in tracks)
     for row in report['changes']:
-        lines.append(f"- {row.get('clip','Timeline')}: {row['type']}"+(f" / {row['fields']}" if 'fields' in row else f" / {row.get('before')} → {row.get('after')}"))
+        if row['type']=='tracks':detail=f" / [{brief(row['before'])}] → [{brief(row['after'])}]"
+        else:detail=f" / {row['fields']}" if 'fields' in row else f" / {row.get('before')} → {row.get('after')}"
+        lines.append(f"- {row.get('clip','Timeline')}: {row['type']}"+detail)
     for issue in report['issues']:lines.append(f"- {issue['kind']} at {issue['where']}: {issue['detail']}")
     lines.append(report['limits'])
     return '\n'.join(lines)

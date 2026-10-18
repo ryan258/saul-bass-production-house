@@ -1,12 +1,17 @@
 """Bounded, resumable full-film renders using Motion Canvas's official renderer."""
 from pathlib import Path
+from fractions import Fraction
 import copy, hashlib, io, json, shutil, subprocess, time
 import ffmpeg
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from .project import FRAMEWORK, binary, dump, sha
-from .media import COLOR, BSF, probe
+from .media import COLOR, BSF, probe, _run_ffmpeg, _promote_files, _candidate_directory
 from .motion import pcm, verify_audio_window
+from .fingerprint import browser_identity, runtime_identity, digest
+
+CACHE_SCHEMA=2
+QA_FRAMES={0,456,669,1157,1228,1290,2700,5044,5292,5673,5739,6549,6975,7193}
 
 
 def source(p,override=None):
@@ -22,18 +27,30 @@ def editor(p,override=None):
 def inventory(project):
     records=[];semantic=[]
     for file in sorted(project.parent.rglob('*')):
-        if not file.is_file() or any(part in {'node_modules','__pycache__','.vite'} for part in file.parts):continue
+        if not file.is_file() or any(part in {'node_modules','__pycache__','.vite','.git'} for part in file.relative_to(project.parent).parts):continue
         relative=str(file.relative_to(project.parent))
         records.append({'file':relative,'sha256':sha(file)})
         if file.name=='project.meta':continue # Delivery settings are explicitly supplied to Renderer.
         if file.suffix=='.meta':
             data=json.loads(file.read_text())
-            semantic.append((relative,sorted((e['name'],round(e['targetTime'],9)) for e in data.get('timeEvents',[]))))
+            # SceneMetadata includes the random seed, version and custom fields.
+            # EditableTimeEvents computes these three event fields in memory;
+            # ReadOnlyTimeEvents uses the saved name/targetTime during rendering.
+            # Keep all other metadata conservatively, including unknown fields.
+            if 'timeEvents' in data:
+                data['timeEvents']=sorted(
+                    ({key:value for key,value in event.items() if key not in {'initialTime','offset','stack'}} for event in data['timeEvents']),
+                    key=lambda event:json.dumps(event,sort_keys=True))
+            semantic.append((relative,data))
         else:semantic.append((relative,sha(file)))
-    for name in ['motion-canvas/render.mjs','motion-canvas/render.html','motion-canvas/vite.config.ts','motion-canvas/typecheck.mjs','src/sbph/motion_film.py','package-lock.json']:
-        semantic.append(('framework:'+name,sha(FRAMEWORK/name)))
-    digest=hashlib.sha256(json.dumps(semantic,sort_keys=True).encode()).hexdigest()
-    return digest,records
+    for name in ['motion-canvas/render.mjs','motion-canvas/render.html','motion-canvas/vite.config.ts','motion-canvas/typecheck.mjs','src/sbph/motion_film.py','src/sbph/motion.py','src/sbph/media.py','src/sbph/project.py','src/sbph/fingerprint.py','package-lock.json','requirements.lock']:
+        label='framework:'+name;value=sha(FRAMEWORK/name)
+        semantic.append((label,value));records.append({'file':label,'sha256':value})
+    runtime={'tools':runtime_identity(),'browser':browser_identity()}
+    semantic.append(('runtime:specification',runtime))
+    records.append({'file':'runtime:specification','sha256':digest(runtime),'specification':runtime})
+    fingerprint=hashlib.sha256(json.dumps(semantic,sort_keys=True).encode()).hexdigest()
+    return fingerprint,records
 
 
 def effective_plan(plan,meta):
@@ -91,13 +108,15 @@ def encode(work,output,start,count,fps,width,height):
     if [f.name for f in files]!=[f'{i:06}.png' for i in range(start,start+count)]:raise RuntimeError('Incomplete or incorrectly numbered image sequence')
     video=ffmpeg.input(str(work/'frames/%06d.png'),start_number=start,framerate=fps).video.filter('scale',out_color_matrix='bt709',out_range='tv')
     graph=ffmpeg.output(video,str(output),vcodec='libx264',crf=17,preset='medium',pix_fmt='yuv420p',r=fps,threads=6,g=fps,vframes=count,**{'bsf:v':BSF},**COLOR)
-    ffmpeg.run(graph.global_args('-hide_banner','-loglevel','error'),cmd=binary('ffmpeg'),overwrite_output=True)
+    _run_ffmpeg(graph.global_args('-hide_banner','-loglevel','error'))
     check_video(output,count,fps,(width,height))
 
 
-def check_video(file,count,fps,size):
-    streams=probe(file)['streams'];video=next(s for s in streams if s['codec_type']=='video')
-    if int(video.get('nb_frames',-1))!=count or video['avg_frame_rate']!=f'{fps}/1':raise RuntimeError('Delivered frame count/rate mismatch')
+def check_video(file,count,fps,size,with_audio=False):
+    streams=probe(file)['streams'];videos=[s for s in streams if s.get('codec_type')=='video'];audios=[s for s in streams if s.get('codec_type')=='audio']
+    if len(videos)!=1 or len(audios)!=(1 if with_audio else 0):raise RuntimeError('Delivered stream count mismatch')
+    video=videos[0]
+    if int(video.get('nb_frames',-1))!=count or Fraction(video['avg_frame_rate'])!=fps:raise RuntimeError('Delivered frame count/rate mismatch')
     if (video['width'],video['height'])!=size:raise RuntimeError('Delivered dimensions mismatch')
     expected={'color_primaries':'bt709','color_transfer':'iec61966-2-1','color_space':'bt709','color_range':'tv'}
     if any(video.get(k)!=v for k,v in expected.items()):raise RuntimeError('Delivered color tags mismatch')
@@ -117,7 +136,8 @@ def decode_frames(movie,frames,folder,size=None):
 
 def contact_sheets(movie,plan,out):
     """Decode the full movie once for all 57 storyboard samples."""
-    font=ImageFont.truetype('/System/Library/Fonts/Supplemental/Arial Bold.ttf',14)
+    from .review import label_font
+    font=label_font(14)
     shots=plan['scenes'];audit=[];folder=out/'decoded-storyboard-work'
     if folder.exists():shutil.rmtree(folder)
     samples=decode_frames(movie,[(s['start']+s['end']-1)//2 for s in shots],folder,(426,240))
@@ -148,62 +168,142 @@ def quality_checks(movie,qa,out):
     return checks
 
 
+def _cut_audit(audit,expected,start,count):
+    if not isinstance(audit,dict) or any(key not in expected or type(frame) is not int or frame!=expected[key] for key,frame in audit.items()):
+        raise RuntimeError('Native cut audit disagrees with the current edit')
+    if any(key not in audit for key,frame in expected.items() if start<=frame<start+count):
+        raise RuntimeError('Native cut audit is incomplete for the rendered section')
+    return audit
+
+
+def _qa_records(folder,frames,size):
+    expected=[f'{frame:06}.png' for frame in sorted(frames)]
+    if sorted(file.name for file in folder.iterdir())!=expected:
+        raise RuntimeError('Section source-frame evidence is incomplete')
+    records=[]
+    for name in expected:
+        file=folder/name
+        with Image.open(file) as image:
+            if image.size!=size:raise RuntimeError('Section source-frame dimensions differ from the edit')
+            image.verify()
+        records.append({'file':name,'sha256':sha(file)})
+    return records
+
+
+def _reusable_chunk(row,file,qa,start,count,spec,selected,expected_cuts):
+    if not isinstance(row,dict):return False
+    expected={'start':start,'frames':count,'fps':spec['fps'],'width':spec['width'],'height':spec['height']}
+    if any(type(row.get(key)) is not int or row[key]!=value for key,value in expected.items()):return False
+    try:
+        if not file.is_file() or sha(file)!=row.get('sha256'):return False
+        check_video(file,count,spec['fps'],(spec['width'],spec['height']))
+        _cut_audit(row.get('cutAudit'),expected_cuts,start,count)
+        evidence_matches=_qa_records(qa,selected,(spec['width'],spec['height']))==row.get('sourceFrames')
+        return evidence_matches and sha(file)==row.get('sha256')
+    except (OSError,ValueError,KeyError,TypeError,RuntimeError,ffmpeg.Error):return False
+
+
+def _protect_inputs(out,audio,baseline,page_count):
+    """Managed output replacement must never consume an original input."""
+    chunks=out/'chunks'
+    if chunks.is_symlink():raise ValueError('Full-film chunk directory must not be a symlink')
+    managed=[chunks,out/'chunks.json',out/'unit-9-motion-canvas-v01.mp4',
+        out/'verification.json',out/'effective-edit.json',out/'source-frames',
+        *out.glob('decoded-shots-*.jpg'),
+        *[out/f'decoded-shots-{page+1:02}.jpg' for page in range(page_count)]]
+    for file in [Path(audio).resolve(),baseline.resolve()]:
+        if any(file.is_relative_to(target.resolve()) for target in managed):
+            raise ValueError('Full-film original audio and baseline must be outside managed output paths: '+str(file))
+
+
 def build(p,override=None,chunk_frames=600):
-    project=source(p,override);spec=json.loads((project.parent/'proof.json').read_text());plan=json.loads((project.parent/'edit.json').read_text())
+    project=source(p,override);out=(p.output/'motion-canvas-full').resolve()
+    if out.is_relative_to(project.parent) or project.parent.is_relative_to(out):
+        raise ValueError('Motion Canvas source and full-film output directories must not overlap')
+    fingerprint,source_inventory=inventory(project)
+    spec=json.loads((project.parent/'proof.json').read_text());plan=json.loads((project.parent/'edit.json').read_text())
     meta=json.loads((project.parent/(spec.get('scene','film')+'.meta')).read_text())
     plan=effective_plan(plan,meta);validate_plan(plan,meta)
+    for key in ['frames','fps','width','height']:
+        if type(spec.get(key)) is not int or spec[key]<1:raise ValueError('Invalid full-film render field: '+key)
+    if spec['width']%2 or spec['height']%2:raise ValueError('Full-film delivery requires even dimensions')
     if spec['frames']!=plan['frames'] or spec['fps']!=plan['fps']:raise ValueError('Render and edit frame ranges disagree')
-    if not isinstance(chunk_frames,int) or chunk_frames<30 or chunk_frames%spec['fps']:raise ValueError('Use whole-second chunks of at least one second')
-    subprocess.run([binary('node'),str(FRAMEWORK/'motion-canvas/typecheck.mjs'),str(project)],check=True)
+    if type(chunk_frames) is not int or chunk_frames<30 or chunk_frames%spec['fps']:raise ValueError('Use whole-second chunks of at least one second')
     baseline=(p.root/p.data.get('motion_full_baseline','unit-9-svg-film-v01.mp4')).resolve()
+    _protect_inputs(out,p.audio,baseline,(len(plan['scenes'])+11)//12)
     baseline_sha=sha(baseline);audio_sha=sha(p.audio)
     if audio_sha!=plan['sourceAudioSha256'] or sha(project.parent/'audio.wav')!=audio_sha:raise ValueError('Full original audio identity changed')
     window_sha=verify_audio_window(p,project,spec)
-    fingerprint,source_inventory=inventory(project)
-    out=p.output/'motion-canvas-full';out.mkdir(parents=True,exist_ok=True)
-    dump(out/'effective-edit.json',plan)
-    chunks=out/'chunks';chunks.mkdir(exist_ok=True);qa=out/'source-frames';qa.mkdir(exist_ok=True)
-    work=out/'render-work';cache=out/'chunks.json'
+    out.mkdir(parents=True,exist_ok=True);chunks=out/'chunks';chunks.mkdir(exist_ok=True);cache=out/'chunks.json'
+    header={'schemaVersion':CACHE_SCHEMA,'sourceFingerprint':fingerprint,'chunkFrames':chunk_frames,
+        'renderSpecification':{key:spec[key] for key in ['frames','fps','width','height']}}
     prior=json.loads(cache.read_text()) if cache.exists() else {}
-    entries=prior.get('chunks',{}) if prior.get('sourceFingerprint')==fingerprint else {}
-    selected={0,456,669,1157,1228,1290,2700,5044,5292,5673,5739,6549,6975,7193}
-    began=time.perf_counter();render_seconds=0;full_audit={}
-    expected_cuts={s['id']:s['start'] for s in plan['scenes']}
-    for index,start in enumerate(range(0,spec['frames'],chunk_frames)):
-        count=min(chunk_frames,spec['frames']-start);file=chunks/f'{index:03}.mp4';key=str(index)
-        old=entries.get(key)
-        if old and old['start']==start and old['frames']==count and file.exists() and sha(file)==old['sha256']:
-            full_audit.update(old.get('cutAudit',{}));print(f"Motion Canvas section {index+1}: reusing verified frames {start}–{start+count-1}.",flush=True);continue
-        if work.exists():shutil.rmtree(work)
-        work.mkdir();result=render(project,work,start,count)
-        if result.get('errors'):raise RuntimeError('Motion Canvas reported scene errors')
-        for shot,frame in (result.get('cutAudit') or {}).items():
-            if expected_cuts[shot]!=frame:raise RuntimeError(f'Native cut {shot} landed on {frame}, expected {expected_cuts[shot]}')
-        full_audit.update(result.get('cutAudit') or {})
-        encode(work,file,start,count,spec['fps'],spec['width'],spec['height'])
-        for frame in selected:
-            if start<=frame<start+count:shutil.copy2(work/'frames'/f'{frame:06}.png',qa/f'{frame:06}.png')
-        if inventory(project)[0]!=fingerprint:raise RuntimeError('Source or timing changed during render; resume after reviewing the edit')
-        entries[key]={'start':start,'frames':count,'sha256':sha(file),'cutAudit':result.get('cutAudit'),'renderSeconds':result.get('renderSeconds')}
-        dump(cache,{'sourceFingerprint':fingerprint,'chunks':entries})
-        render_seconds+=result['renderSeconds'];shutil.rmtree(work)
-        print(f"Motion Canvas section {index+1}/{(spec['frames']+chunk_frames-1)//chunk_frames}: frames {start}–{start+count-1} verified.",flush=True)
-    if full_audit!=expected_cuts:raise RuntimeError('Native cut audit is incomplete')
-    listing=out/'concat.txt'
-    listing.write_text(''.join(f"file 'chunks/{i:03}.mp4'\n" for i in range((spec['frames']+chunk_frames-1)//chunk_frames)))
-    picture=ffmpeg.input(str(listing),format='concat',safe=1).video
+    compatible=isinstance(prior,dict) and all(prior.get(key)==value for key,value in header.items())
+    total=(spec['frames']+chunk_frames-1)//chunk_frames
+    entries={key:value for key,value in prior.get('chunks',{}).items() if key in {str(i) for i in range(total)}} \
+        if compatible and isinstance(prior.get('chunks'),dict) else {}
+    selected={frame for frame in QA_FRAMES|{spec['frames']-1} if frame<spec['frames']}
+    began=time.perf_counter();render_seconds=0;full_audit={};expected_cuts={s['id']:s['start'] for s in plan['scenes']}
     final=out/'unit-9-motion-canvas-v01.mp4'
-    graph=ffmpeg.output(picture,ffmpeg.input(str(baseline)).audio,str(final),vcodec='copy',acodec='copy',t=spec['frames']/spec['fps'],movflags='+faststart',**{'bsf:v':BSF},**COLOR)
-    ffmpeg.run(graph.global_args('-hide_banner','-loglevel','error'),cmd=binary('ffmpeg'),overwrite_output=True)
-    video=check_video(final,spec['frames'],spec['fps'],(spec['width'],spec['height']))
-    original_pcm=hashlib.sha256(pcm(baseline)).hexdigest()
-    if hashlib.sha256(pcm(final)).hexdigest()!=original_pcm:raise RuntimeError('Delivery audio differs from original full film')
-    if sha(p.audio)!=audio_sha or sha(baseline)!=baseline_sha:raise RuntimeError('Original film or recording changed')
-    if inventory(project)[0]!=fingerprint:raise RuntimeError('Sources changed before delivery')
-    decoded=contact_sheets(final,plan,out)
-    picture_checks=quality_checks(final,qa,out)
-    _,source_inventory=inventory(project)
-    record={'engine':'Motion Canvas 3.17.2 / official Renderer + ImageExporter','file':str(p.public_path(final)),'sha256':sha(final),'frames':spec['frames'],'fps':spec['fps'],'duration':spec['frames']/spec['fps'],'width':spec['width'],'height':spec['height'],'color':COLOR,'nativeShots':len(plan['scenes']),'chosenActionAccents':sum(len(s['accents']) for s in plan['scenes']),'editableEvents':len(json.loads((project.parent/'film.meta').read_text())['timeEvents']),'nativeCutAudit':full_audit,'sourceAudioSha256':audio_sha,'baselineSha256':baseline_sha,'editorWavPcmSha256':window_sha,'decodedDeliveryPcmSha256':original_pcm,'audio':'Original full-film AAC track stream-copied; decoded PCM identical. Editor WAV is a byte-identical copy of the original recording.','sourceFingerprint':fingerprint,'sourceInventory':source_inventory,'renderSecondsThisRun':round(render_seconds,3),'totalBuildSecondsThisRun':round(time.perf_counter()-began,3),'decodedShotSamples':decoded,'sourceToDecodedPictureChecks':picture_checks,'nativeResolveImport':'not performed; original Resolve timeline preserved','humanScreening':'Decoded storyboard and selected physical contacts reviewed; uninterrupted human screening is separate.'}
-    dump(out/'verification.json',record)
+    # Scratch cleanup must not turn a promoted, verified delivery into a failure.
+    with _candidate_directory(prefix='.motion-film-',dir=out) as temporary:
+        stage=Path(temporary);copied=stage/'source'
+        shutil.copytree(project.parent,copied,ignore=shutil.ignore_patterns('node_modules','.git','.vite','__pycache__'))
+        render_project=copied/project.name
+        if inventory(project)[0]!=fingerprint or inventory(render_project)[0]!=fingerprint:
+            raise RuntimeError('Source or timing changed while preparing the render')
+        subprocess.run([binary('node'),str(FRAMEWORK/'motion-canvas/typecheck.mjs'),str(render_project)],check=True)
+        qa=stage/'source-frames';qa.mkdir();linked=stage/'concat-chunks';linked.mkdir();used=[]
+        for index,start in enumerate(range(0,spec['frames'],chunk_frames)):
+            count=min(chunk_frames,spec['frames']-start);file=chunks/f'{index:03}.mp4';key=str(index);chunk_qa=chunks/f'{index:03}.source-frames'
+            section_frames={frame for frame in selected if start<=frame<start+count};old=entries.get(key)
+            if _reusable_chunk(old,file,chunk_qa,start,count,spec,section_frames,expected_cuts):
+                print(f'Motion Canvas section {index+1}: reusing verified frames {start}–{start+count-1}.',flush=True)
+            else:
+                with _candidate_directory(prefix='.section-',dir=stage) as section:
+                    work=Path(section);result=render(render_project,work,start,count)
+                    if result.get('result')!=0 or result.get('errors'):raise RuntimeError('Motion Canvas did not report successful section completion')
+                    audit=_cut_audit(result.get('cutAudit'),expected_cuts,start,count)
+                    candidate=work/'section.mp4';encode(work,candidate,start,count,spec['fps'],spec['width'],spec['height'])
+                    evidence=work/'source-frames';evidence.mkdir()
+                    for frame in section_frames:shutil.copy2(work/'frames'/f'{frame:06}.png',evidence/f'{frame:06}.png')
+                    old={'start':start,'frames':count,'fps':spec['fps'],'width':spec['width'],'height':spec['height'],
+                        'sha256':sha(candidate),'cutAudit':audit,'renderSeconds':result.get('renderSeconds',0),
+                        'sourceFrames':_qa_records(evidence,section_frames,(spec['width'],spec['height']))}
+                    updated={**entries,key:old};staged_cache=work/'chunks.json';dump(staged_cache,{**header,'chunks':updated})
+                    if inventory(project)[0]!=fingerprint or inventory(render_project)[0]!=fingerprint:
+                        raise RuntimeError('Source or timing changed during render; previous section and cache preserved')
+                    _promote_files([(candidate,file),(evidence,chunk_qa),(staged_cache,cache)],work)
+                    entries=updated
+                    render_seconds+=old['renderSeconds']
+                print(f'Motion Canvas section {index+1}/{total}: frames {start}–{start+count-1} verified.',flush=True)
+            full_audit.update(old['cutAudit'])
+            chunk=linked/f'{index:03}.mp4';chunk.hardlink_to(file)
+            if sha(chunk)!=old['sha256']:raise RuntimeError('Section changed while preparing assembly')
+            used.append((chunk,old['sha256']))
+            for row in old['sourceFrames']:
+                target=qa/row['file'];shutil.copy2(chunk_qa/row['file'],target)
+                if sha(target)!=row['sha256']:raise RuntimeError('Section source-frame evidence changed during assembly')
+        if full_audit!=expected_cuts:raise RuntimeError('Native cut audit is incomplete')
+        listing=stage/'concat.txt';listing.write_text(''.join(f"file 'concat-chunks/{i:03}.mp4'\n" for i in range(total)))
+        picture=ffmpeg.input(str(listing),format='concat',safe=1).video;candidate=stage/final.name
+        graph=ffmpeg.output(picture,ffmpeg.input(str(baseline)).audio,str(candidate),vcodec='copy',acodec='copy',t=spec['frames']/spec['fps'],movflags='+faststart',**{'bsf:v':BSF},**COLOR)
+        _run_ffmpeg(graph.global_args('-hide_banner','-loglevel','error'))
+        check_video(candidate,spec['frames'],spec['fps'],(spec['width'],spec['height']),with_audio=True)
+        original_pcm=hashlib.sha256(pcm(baseline)).hexdigest()
+        if hashlib.sha256(pcm(candidate)).hexdigest()!=original_pcm:raise RuntimeError('Delivery audio differs from original full film')
+        decoded=contact_sheets(candidate,plan,stage);picture_checks=quality_checks(candidate,qa,stage)
+        effective=stage/'effective-edit.json';dump(effective,plan)
+        sheets=sorted(stage.glob('decoded-shots-*.jpg'))
+        if len(sheets)!=(len(plan['scenes'])+11)//12:raise RuntimeError('Decoded storyboard sheet set is incomplete')
+        record={'schemaVersion':CACHE_SCHEMA,'engine':'Motion Canvas 3.17.2 / official Renderer + ImageExporter','file':str(p.public_path(final)),'sha256':sha(candidate),'frames':spec['frames'],'fps':spec['fps'],'duration':spec['frames']/spec['fps'],'width':spec['width'],'height':spec['height'],'color':COLOR,'nativeShots':len(plan['scenes']),'chosenActionAccents':sum(len(s['accents']) for s in plan['scenes']),'editableEvents':len(meta['timeEvents']),'nativeCutAudit':full_audit,'sourceAudioSha256':audio_sha,'baselineSha256':baseline_sha,'editorWavPcmSha256':window_sha,'decodedDeliveryPcmSha256':original_pcm,'audio':'Original full-film AAC track stream-copied; decoded PCM identical. Editor WAV is a byte-identical copy of the original recording.','sourceFingerprint':fingerprint,'sourceInventory':source_inventory,'renderSecondsThisRun':round(render_seconds,3),'totalBuildSecondsThisRun':round(time.perf_counter()-began,3),'decodedShotSamples':decoded,'sourceToDecodedPictureChecks':picture_checks,'nativeResolveImport':'not performed; original Resolve timeline preserved','humanScreening':'not recorded for this build'}
+        record['artifacts']=[{'file':str(file.relative_to(stage)),'sha256':sha(file)} for file in [candidate,effective,*sorted(qa.glob('*.png')),*sheets]]
+        receipt=stage/'verification.json';dump(receipt,record)
+        if sha(p.audio)!=audio_sha or sha(baseline)!=baseline_sha:raise RuntimeError('Original film or recording changed before delivery')
+        if inventory(project)[0]!=fingerprint or inventory(render_project)[0]!=fingerprint:
+            raise RuntimeError('Sources or rendering tools changed before delivery')
+        if any(sha(file)!=value for file,value in used):raise RuntimeError('Section media changed before delivery')
+        obsolete=[file for file in out.glob('decoded-shots-*.jpg') if file.name not in {sheet.name for sheet in sheets}]
+        _promote_files([(candidate,final),(receipt,out/'verification.json'),(effective,out/'effective-edit.json'),(qa,out/'source-frames'),*[(sheet,out/sheet.name) for sheet in sheets]],stage,remove=obsolete)
     print(json.dumps({k:record[k] for k in ['file','frames','fps','duration','nativeShots','chosenActionAccents','audio','totalBuildSecondsThisRun']},indent=2))
     return final
