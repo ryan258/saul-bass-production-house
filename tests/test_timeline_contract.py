@@ -25,4 +25,27 @@ class TimelineContract(unittest.TestCase):
         self.assertEqual(track[1].range_in_parent().start_time.value,29)
         self.assertEqual(track[0].media_reference.available_range.duration.value,53)
 
+
+class StoryEvents(unittest.TestCase):
+    edit={'frames':100,'scenes':[
+        {'id':'01','name':'Start','accents':[{'frame':20,'meaning':'Grip stops'}],'pulses':[{'frame':20},{'frame':30}]},
+        {'id':'02','name':'Next','accents':[{'frame':70}]}]}
+
+    def test_authored_events_win_even_when_empty(self):
+        from sbph.validation import story_events
+        self.assertEqual(story_events({**self.edit,'events':[]}),[])
+        self.assertEqual(story_events({**self.edit,'events':[{'id':'x'}]}),[{'id':'x'}])
+
+    def test_native_accents_and_impacts_become_ordered_markers_without_duplicates(self):
+        from sbph.validation import story_events
+        rows=story_events(self.edit)
+        self.assertEqual([(r['frame'],r['basis']) for r in rows],[(20,'accent'),(30,'action'),(70,'accent')])
+        self.assertEqual(rows[0]['id'],'01 / Grip stops');self.assertEqual(rows[2]['meaning'],'Selected accent')
+
+    def test_plain_edits_get_no_markers_and_bad_frames_are_refused(self):
+        from sbph.validation import story_events
+        self.assertEqual(story_events({'frames':10,'scenes':[{'id':'a','name':'A'}]}),[])
+        with self.assertRaisesRegex(ValueError,'inside the edit'):story_events({'frames':10,'scenes':[{'id':'a','name':'A','accents':[{'frame':10}]}]})
+
+
 if __name__=='__main__':unittest.main()

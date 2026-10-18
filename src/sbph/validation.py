@@ -22,6 +22,25 @@ def validate_edit(p):
             if not isinstance(event.get(key),str):raise ValueError('Event requires '+key)
 
 
+def story_events(edit):
+    """Authored events if the edit has the key; otherwise markers from chosen accents and impacts.
+
+    A native Motion Canvas plan records its selected accents and physical impacts
+    (pulses) on each shot but has no top-level events array.
+    """
+    if 'events' in edit:return edit['events']
+    rows=[]
+    for scene in edit['scenes']:
+        taken=set()
+        for accent in scene.get('accents',[]):
+            meaning=accent.get('meaning') or 'Selected accent'
+            rows.append({'id':f"{scene['id']} / {meaning}",'frame':accent['frame'],'basis':'accent','meaning':meaning});taken.add(accent['frame'])
+        for hit in scene.get('pulses',[]):
+            if hit['frame'] not in taken:rows.append({'id':f"{scene['id']} / impact",'frame':hit['frame'],'basis':'action','meaning':'Impact in '+scene['name']})
+    if any(type(row['frame']) is not int or not 0<=row['frame']<edit['frames'] for row in rows):raise ValueError('Accent and impact frames must be inside the edit')
+    return sorted(rows,key=lambda row:row['frame'])
+
+
 def validate_source_audio(p):
     from .media import probe
     streams=[s for s in probe(p.audio)['streams'] if s['codec_type']=='audio']

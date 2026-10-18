@@ -58,7 +58,7 @@ def check_package(folder):
 
 
 def package(p,destination=None):
-    from .validation import validate_shot_set,audio_cues
+    from .validation import validate_shot_set,audio_cues,story_events
     from .timeline import build_model
     from .workflow import notes,shot_intent
     records=validate_shot_set(p);tl=build_model(p,records,audio_cues(p))
@@ -81,7 +81,7 @@ def package(p,destination=None):
         tl.audio_tracks()[0][0].media_reference.target_url=quote(name,safe='/')
         media.append({'file':name,'sha256':audio_hash,'kind':'Audio','availableFrames':p.frames})
         otio.adapters.write_to_file(tl,str(dest/'edit.otio'))
-        dump(dest/'editorial-context.json',{'title':p.edit['title'],'fps':p.fps,'scenes':p.edit['scenes'],'events':p.edit.get('events',[]),'notes':notes(p,True),'intent':[shot_intent(p,s['id']) for s in p.edit['scenes']]})
+        dump(dest/'editorial-context.json',{'title':p.edit['title'],'fps':p.fps,'scenes':p.edit['scenes'],'events':story_events(p.edit),'notes':notes(p,True),'intent':[shot_intent(p,s['id']) for s in p.edit['scenes']]})
         (dest/'README.txt').write_text('SBPH portable editorial handoff\n\nKeep this entire folder together. edit.otio uses media/ relative references.\nVideo clips contain baked animation and effects with documented handles.\nAudio is the unchanged original recording; lock it in your editor.\nNative editor import and track locks have not been verified. If your editor\ndoes not resolve relative paths, relink to this folder; do not move media alone.\nExport an OTIO return preserving clip metadata when possible.\nCompare: sbph compare-return /path/to/this-folder --returned /path/to/return.otio\nCheck: sbph package-check /path/to/this-folder\nComparison reports timing and media differences; it does not apply edits.\n',encoding='utf-8')
         manifest={'schemaVersion':1,'title':p.edit['title'],'fps':p.fps,'frames':p.frames,'timeline':'edit.otio','sourceFingerprint':records['sourceFingerprint'],'media':media,'files':{f.relative_to(dest).as_posix():sha(f) for f in sorted(dest.rglob('*')) if f.is_file()},'nativeEditorImport':'not tested'}
         dump(dest/'handoff.json',manifest)

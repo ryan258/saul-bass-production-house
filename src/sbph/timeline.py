@@ -3,7 +3,7 @@ from pathlib import Path
 import json,importlib.metadata
 import opentimelineio as otio
 from .project import dump,sha
-from .validation import validate_shot_set,audio_cues
+from .validation import validate_shot_set,audio_cues,story_events
 
 def build_model(p,records,candidates):
     """Construct interchange in memory so packaging never overwrites an export."""
@@ -21,7 +21,7 @@ def build_model(p,records,candidates):
     wav=otio.schema.ExternalReference(target_url=p.public_path(p.audio).as_uri(),available_range=TR(RT(0,p.fps),RT(p.frames,p.fps)))
     a.append(otio.schema.Clip(name='Original recording / editorial window / lock before timing edits',media_reference=wav,source_range=TR(RT(0,p.fps),RT(p.frames,p.fps))))
     a[0].metadata['sbph']={'media_sha256':sha(p.audio),'role':'original_audio'}
-    for e in p.edit.get('events',[]):
+    for e in story_events(p.edit):
         color=otio.schema.MarkerColor.GREEN if e['basis']=='accent' else otio.schema.MarkerColor.CYAN
         v.markers.append(otio.schema.Marker(name=e['id'],marked_range=TR(RT(e['frame'],p.fps),RT(1,p.fps)),color=color,metadata={'sbph':{'basis':e['basis'],'meaning':e['meaning']}}))
     if candidates:
