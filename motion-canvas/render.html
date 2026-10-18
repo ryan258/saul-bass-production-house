@@ -29,7 +29,7 @@ window.sbphRender = async options => {
     result=0;
   }else await renderer.render(settings);
   if (result !== 0 || errors.length) throw new Error(JSON.stringify({result, errors}));
-  return {result, errors,cutAudit:globalThis.unit9CutAudit || null};
+  return {result, errors,cutAudit:globalThis.sbphCutAudit || globalThis.unit9CutAudit || null};
 };
 window.sbphReady = true;
 </script></body></html>

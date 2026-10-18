@@ -9,4 +9,6 @@ dependencies = [
   "ffmpeg-python==0.2.0",
   "librosa==1.0.0",
   "moviepy==2.2.1",
+  "numpy==2.5.4",
+  "pillow==11.3.0",
 ]
