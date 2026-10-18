@@ -19,7 +19,7 @@ from sbph.delivery import delivery_path,reference_path
 from sbph.media import BSF,probe
 from sbph.project import binary,dump,sha
 from sbph.review import contact_sheets
-from sbph.verify import verify
+from sbph.verify import project_audio_comparison,verify
 from sbph import unit9_checks
 
 
@@ -113,6 +113,28 @@ class GenericVerification(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):report=conform(self.p)
         self.assertEqual(report['sampleSize'],[512,384]);self.assertEqual(len(report['comparedFrames']),6)
         self.assertEqual(report['referenceSha256'],sha(reference))
+
+    def test_conform_source_changes_do_not_replace_prior_report(self):
+        reference=self.p.root/'independent.mp4';shutil.copy2(self.movie,reference)
+        self.p.data={'reference':'independent.mp4'}
+        receipt=self.p.output/'assembly-verification.json';receipt.write_bytes(b'previous conform report')
+        source=self.p.audio.read_bytes()
+        initial_hash=sha(self.p.audio)
+        for change in ['before-audio','after-audio','framework']:
+            with self.subTest(change=change):
+                self.p.audio.write_bytes(source)
+                self.records['sourceFingerprint']=initial_hash
+                self.p.source_inventory=lambda:(sha(self.p.audio),[])
+                def comparison(p,movie):
+                    if change=='before-audio':p.audio.write_bytes(source+b'changed unused tail')
+                    result=project_audio_comparison(p,movie)
+                    if change=='after-audio':p.audio.write_bytes(source+b'changed unused tail')
+                    if change=='framework':p.source_inventory=lambda:('changed framework',[])
+                    return result
+                with patch('sbph.assembly_check.project_audio_comparison',side_effect=comparison):
+                    with self.assertRaisesRegex(RuntimeError,'Build sources changed during conform'):
+                        conform(self.p)
+                self.assertEqual(receipt.read_bytes(),b'previous conform report')
 
 
 class ReviewPagination(unittest.TestCase):

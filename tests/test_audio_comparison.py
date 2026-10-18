@@ -60,5 +60,19 @@ class AudioComparison(unittest.TestCase):
         subprocess.run([binary('ffmpeg'),'-v','error','-i',str(self.source),'-c:a','aac','-b:a','128k',str(aac)],check=True)
         self.assertGreater(audio_comparison(self.source,aac)['monoCorrelationAt16k'],.995)
 
+    def test_source_replaced_or_removed_during_decode_cannot_acquire_new_hash(self):
+        for change in ['replace','remove']:
+            with self.subTest(change=change):
+                self.source.write_bytes(b'original source')
+                def decode(path):
+                    if path==self.delivery:
+                        if change=='replace':self.source.write_bytes(b'replacement source')
+                        else:self.source.unlink()
+                    return self.signal.copy()
+                stream={'codec_type':'audio','codec_name':'pcm_s16le','sample_rate':'16000'}
+                with patch('sbph.verify.decode_mono',side_effect=decode),patch('sbph.verify.probe',return_value={'streams':[stream]}):
+                    with self.assertRaisesRegex(RuntimeError,'Source audio changed during comparison'):
+                        audio_comparison(self.source,self.delivery)
+
 
 if __name__=='__main__':unittest.main()

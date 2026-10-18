@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -26,6 +27,23 @@ class Workflow(unittest.TestCase):
         self.assertFalse(result['sourceAudioExists']);self.assertEqual(result['build']['status'],'missing')
         self.assertIn('Prepare or restore',result['nextAction']['text'])
         self.assertEqual(files(p.root),before);self.assertFalse((p.root/'.sbph').exists())
+
+    def test_motion_canvas_status_suggests_a_shot_without_an_svg_driver(self):
+        data=json.loads(self.p.config.read_text());data['renderer']='motion-canvas';self.p.config.write_text(json.dumps(data))
+        self.p.driver.unlink()
+        result=snapshot(Project.load(self.p.config))
+        self.assertIn(' shots ',result['nextAction']['command']);self.assertNotIn('animatic',result['nextAction']['command'])
+
+    def test_cli_reports_missing_fields_and_failed_subprocesses_without_tracebacks(self):
+        env={**os.environ,'PYTHONPATH':str(FRAMEWORK/'src')}
+        def run(*args):return subprocess.run([sys.executable,'-m','sbph',*args],capture_output=True,text=True,env=env)
+        edit=self.p.root/'data/edit.json';data=json.loads(edit.read_text());del data['frames'];edit.write_text(json.dumps(data))
+        result=run('status',str(self.p.config))
+        self.assertEqual(result.returncode,1);self.assertIn('missing required field',result.stderr);self.assertNotIn('Traceback',result.stderr)
+        script="import runpy,subprocess,sys;from unittest.mock import patch;sys.argv=['sbph','status','x']\n"\
+            "with patch('sbph.project.Project.load',side_effect=subprocess.CalledProcessError(2,['node','x'])):runpy.run_module('sbph.__main__',run_name='__main__')"
+        result=subprocess.run([sys.executable,'-c',script],capture_output=True,text=True,env=env)
+        self.assertEqual(result.returncode,1);self.assertIn('command failed (2): node x',result.stderr);self.assertNotIn('Traceback',result.stderr)
 
     def test_timecodes_and_invalid_time_are_unambiguous(self):
         self.assertEqual(flow.parse_time('00:00:01:08',24),32)
