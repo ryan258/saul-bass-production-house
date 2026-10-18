@@ -1,5 +1,7 @@
 # Resolve handoff
 
+To *prove* a handoff in Resolve (import, edit, export, compare), use [resolve-acceptance.md](resolve-acceptance.md).
+
 The primary export is OpenTimelineIO, a format Resolve supports for timeline import and export. This implementation uses OTIO objects and its serializer, with an XML fallback written by the community FCP adapter.
 
 ## Unit 9 package

@@ -18,6 +18,59 @@ outputs or decoding review pictures. It requires a complete, current shot set.
 These checks do not establish human timing acceptance, native Resolve import,
 full-stream decoding, or the creative correctness of the picture.
 
+## Recovery and output preservation
+
+`shots --resume` applies the same per-shot record/media checks before reusing a
+clip, including a second hash check after media probing. It does not trust
+existence or a matching source fingerprint alone. Current
+clips are left untouched; missing, corrupt, malformed-range, or unverifiable clips
+are rendered. A different schema, source inventory, edit, or renderer prevents
+reuse. Plain `shots` continues to render fresh selected shots. An interrupted
+build retains each completed shot's manifest record for the next resume.
+
+Shared SVG shot rendering, shared proof generation, and assembly write temporary
+candidates beside their destination and validate before promotion. Shot movies
+and manifests, and proof movies and receipts, are staged as pairs with rollback
+on caught replacement failures or cancellation. This is recovery from handled
+process errors; it is not a filesystem transaction across a power loss or forced
+process kill.
+
+Known original input paths are checked against managed output paths. Source identity
+is rechecked after staging receipts, before replacement. Scratch cleanup reports
+any retained work without masking the original failure or failing a completed
+save. Recovery storage and its mapping are prepared beside final outputs before
+the previous delivery is detached, so an incomplete rollback needs no additional
+disk allocation to preserve its surviving backups.
+
+Standalone `motion-proof` and `motion-film` also stage complete delivery sets.
+The proof promotes its native movie, comparison movie, receipt, source samples,
+and optional retained frame directory together. A successful build without
+`--keep-frames` removes an older retained sequence within that same rollback
+operation. Failed proof attempts report a unique diagnostic staging directory;
+retrying does not erase it or the previous delivered version.
+
+The full-film builder publishes the movie, verification, effective edit, source
+samples, and exact decoded storyboard page set together. Obsolete pages are
+removed only during successful promotion. Its verified chunks, per-chunk QA,
+and cache receipt are a separate resumable cache: each completed section is
+saved to that cache as a recoverable set before proceeding. A later failure
+does not discard verified sections or publish partial delivery artifacts.
+Unverified full-film scratch is cleaned up. Both builders typecheck and render
+source copies, and reject overlapping source/output folders before copying.
+
+Full-film cache schema 2 binds current source/rendering-tool/browser identity,
+render settings, scene seeds and saved metadata, and chunk size. Known computed
+event cache fields are excluded from identity. Reuse checks ranges, hashes, media metadata,
+native cut audit, and exact source-frame evidence. Older cache files stay on
+disk but are not silently adopted as new evidence. Failed restoration reports
+a `.promotion-recovery-*` directory beside the outputs with surviving backups
+and a recovery mapping, outside temporary render work.
+
+`status` and a stale `validate` error list added, removed, and changed inventory
+members. Build-specification details identify browser paths/hashes, tool versions,
+and settings. Missing historical inventories are reported as unavailable evidence.
+These explanations do not waive freshness requirements or relabel older media.
+
 The generic `check` command adds delivery metadata, full-video decoding, audio
 comparison, and generated all-shot contact sheets after this gate. Optional
 picture comparisons and creative profiles are documented in
@@ -66,7 +119,15 @@ See [the creative workflow](creative-workflow.md).
 Delivery audio comparison enforces decoded sample counts. Lossless deliveries
 require equal counts; AAC permits at most one 1024-sample packet at the encoded
 sample rate. Correlation and energetic alignment windows scale to the actual
-recording length. Offset windows avoid the codec-padding boundary. Silence is
+editorial audio window. The full source may be longer than the edit: assembly,
+delivery checks, and conform use source frames `[0, frames)`, and a proof uses its
+selected frame interval. Only the comparison source is cropped; delivered audio
+is decoded in full so an unintended tail remains detectable. Reports retain the
+original recording's hash and record the compared frame/sample window.
+The comparison checks that the original recording's hash remains stable during
+decoding. Conform also rechecks the current build identity before saving its
+report, preserving the previous report when checking fails.
+Offset windows avoid the codec-padding boundary. Silence is
 reported as silence with unmeasurable temporal alignment, rather than a numeric
 correlation claim. Non-finite audio and recordings too short to measure fail.
 

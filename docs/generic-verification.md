@@ -49,8 +49,12 @@ render-path checks; it does not turn that reference into an approved prior cut.
 The delivery must have the edit's dimensions, frame count, rate, and duration;
 the shared encoder's BT.709/sRGB-transfer/limited-range color tags; and 48 kHz
 stereo audio of the expected duration. Audio uses the pass-one sample-count,
-correlation, and alignment checks. The workflow currently expects the continuous
-source recording to match the editorial duration.
+correlation, and alignment checks against the source-zero editorial window
+`[0, frames / fps)`. The original recording may have an unused tail. Only the
+comparison source is cropped; the complete delivered audio is checked, including
+excess samples beyond the allowed AAC padding. Reports retain the original audio
+hash and state the source frame window and decoded sample counts. Proofs use
+their explicitly selected source interval.
 
 FFmpeg decodes the video through the stream with errors treated as failures.
 The verifier retains a midpoint picture from each shot in contact sheets,

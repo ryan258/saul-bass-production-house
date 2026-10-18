@@ -10,7 +10,7 @@ Use established libraries for media mechanics, leaving custom code for artwork, 
 | Sharp 0.35.5 | Core | SVG rasterization through librsvg with the embedded image support our cut-paper assets require. |
 | MoviePy 2.2.1 | Optional composition | Helpful Python clip and layer operations. It is installed and pinned; current encoding/assembly use ffmpeg-python directly. Use v2 APIs rather than old `moviepy.editor` examples. |
 | otio-fcp-adapter 1.0.0 | Fallback | Community adapter writes FCP 7 XML from the same OTIO timeline. Feature preservation still needs an editor conform. |
-| Motion Canvas 3.17.2 | Installed animation backend | Native signals, easing and editable time events drive the Unit 9 shutdown proof. Official Renderer/ImageExporter supply frames; shared FFmpeg delivers the controlled A/B. Full-film handled-shot integration remains a future step. |
+| Motion Canvas 3.17.2 | Installed animation backend | Native signals, easing and editable time events drive the Unit 9 shutdown proof. Official Renderer/ImageExporter supply frames; shared FFmpeg delivers the controlled A/B and, through explicit `motion_shots` registration, handled shots for the shared validation/OTIO path (Unit 9: see [handoff](unit9-motion-handoff.md)). |
 | Remotion | Alternative backend | Frame-based React composition and preview tools fit SVG and web-authored scenes. Not installed or integrated in this version. |
 
 Motion Canvas now supplies the bounded shutdown proof alongside the existing renderer. OTIO and Resolve retain editorial interchange. Remotion remains an uninstalled alternative; it is not another dependency in this production path.

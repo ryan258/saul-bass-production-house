@@ -1,7 +1,21 @@
+## Source change checks
+
+Trace affected imports, callers, routes, templates, and focused tests with native repository searches and source reads before editing. Keep unresolved references explicit and follow Ryan's current verification instructions. Staging, commits, pushes, deployment, and publication require his explicit delegation of that action.
+
+## Project
+
+Local graphic-film toolkit (`sbph`): recording + shot list + frame generator → separately rendered shots, OTIO timeline, verified review movie. Single-user, local only. Start at `docs/guide.md`; release checklist in `docs/v1.md`.
+
+- Tests (run by Ryan, not by agents; report results back): `scripts/test.sh` for all, `scripts/test.sh test_resolve` for one module.
+- Never write into `../nonsense` (Unit 9's sources); generated media lives in ignored `output/` or a film's `production/`.
+- Any change under `src/sbph/`, `render/`, or `motion-canvas/` stales every existing shot build by design; say so before editing and do not start long renders without being asked.
+- Dense one-line Python style is the house style here; match it, keep error messages one line starting `sbph:`.
+- Resolve acceptance uses `sbph resolve-check` / `resolve-record`; never claim native import is verified without a `resolve-acceptance-*.json`.
+
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **saul-bass-production-house** (198 symbols, 416 relationships, 19 execution flows).
+This project is indexed by GitNexus as **saul-bass-production-house** (892 symbols, 2233 relationships, 72 execution flows).
 
 > Index stale? Run `node .gitnexus/run.cjs analyze --index-only` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? Bootstrap with `npx`, `bunx`, or `pnpm dlx` — e.g. `bunx gitnexus@latest analyze` (npm 11 npx crash; #1939).
 

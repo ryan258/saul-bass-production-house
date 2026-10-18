@@ -47,6 +47,16 @@ The environment is already prepared on this machine. From this folder:
 
 `shots` renders every shot with handles. A bounded iteration can use `./unit9 shots --shot 10`; refresh all shots after changing shared artwork or scene code before exporting a complete timeline. Source inventories invalidate stale partial builds; the exporter rejects mixed versions. `timeline` creates the OTIO and XML handoff without rendering again. `assemble` builds a review movie from the editorial bodies, excluding handles. `conform` compares the assembly to an explicitly selected full-frame reference at the start, midpoint, and end of every shot. `check` verifies the selected delivery, audio alignment, handled media, and decoded all-shot contact sheets. Unit 9's extra creative checks use an explicit profile.
 
+Use `shots --resume` to continue an interrupted build. It reuses only clips whose
+current build identity, record, ranges, SHA-256, frame count, rate, and dimensions
+pass the shared shot gate. Missing or invalid clips are rendered; a changed build
+identity requires fresh shots. Plain `shots` and `shots --shot ID` still request
+fresh renders. Shared SVG shots, proofs, and assembly stage their outputs before
+replacement; shot manifests and proof receipts roll back with their movies on
+caught promotion failures. Source recordings may contain an unused tail: delivery
+and conform audio checks compare the source-zero editorial window, and proofs
+compare their selected interval, while retaining the original recording's hash.
+
 `./unit9 validate` runs the shared production gate without writing outputs.
 Assembly, timeline export, delivery checks, and conform now require the same
 current shot set, build fingerprint, ranges, media hashes, and media metadata.
@@ -77,7 +87,39 @@ artifact roles](docs/generic-verification.md).
 
 `motion-film` rebuilds the full 239.8-second Unit 9 film using native Motion Canvas scenes. It renders resumable 600-frame sections and retains hashed section media for recovery. `motion-film-editor` opens the full narration and action timing project. The full source is in `motion-canvas/full-film-v01/`; the movie and decoded review sheets are in `production/motion-canvas-full/`. The original SVG film and shutdown A/B remain available.
 
+Both standalone native builders now prepare complete delivery sets before
+replacement, including their receipts and review images. Caught failures or
+cancellation restore the previous set. They render source copies so native
+metadata caches do not touch original sources. The full-film builder preserves
+validated chunk progress separately and rechecks media and source-frame evidence
+before reuse. Its new cache schema also binds browser/tool identity and chunk
+size; older cache receipts require a fresh render. See [native recovery details](docs/motion-canvas.md).
+
 ## Working in Resolve
+
+Native orientation is available with `./unit9 motion-status` and
+`./unit9 motion-resume`. To inspect the existing complete run explicitly:
+
+```sh
+./unit9 motion-status --run full-run-ti36vxyf
+./unit9 motion-resume --run full-run-ti36vxyf
+```
+
+`--run NAME` must be the first option after the native command. It also works
+with `motion-shots`, `motion-validate`, `motion-check`, and the other native
+handoff/planning commands. It selects only that invocation; default commands
+continue to use their existing output folder. Status lists changed inventory
+files and browser/tool/settings fields without launching a browser or rendering.
+
+Unit 9's native project also has a separate handled-shot registration:
+`./unit9 motion-register` checks/creates its saved timing snapshot, and
+`./unit9 motion-shots --shot 31` renders one bounded shot to
+`output/unit-9-motion-handled/`. The original film tree stays intact. See
+[Unit 9 native handoff](docs/unit9-motion-handoff.md) for the complete workflow,
+refresh guard, and what has and has not been verified (shot 31 in the default
+output; a complete 57-shot run in `output/unit-9-motion-handled/full-run-ti36vxyf/`
+that passed validation earlier but is now stale against changed framework/browser
+identities, and is not yet assembled or checked).
 
 For a collected handoff that can move with its media, use `./signal package` or
 `./sbph package /path/to/production.json`. Check it with
@@ -118,6 +160,6 @@ Python 3.11–3.13, Node, FFmpeg, ffprobe, and uv are required. `requirements.lo
 ./scripts/setup.sh
 ```
 
-Set `SBPH_PYTHON` when Python 3.12 has another executable path. `SBPH_FFMPEG`, `SBPH_FFPROBE`, and `SBPH_NODE` override binary lookup. This Mac can use the existing bundled Node modules as a fallback; `npm ci` creates project-local modules on another machine.
+Setup uses a uv-managed Python 3.12 so `.venv` does not depend on another app's cache. Run the suite with `./scripts/test.sh`. Set `SBPH_PYTHON` to use a different interpreter. `SBPH_FFMPEG`, `SBPH_FFPROBE`, and `SBPH_NODE` override binary lookup. This Mac can use the existing bundled Node modules as a fallback; `npm ci` creates project-local modules on another machine.
 
-See [the production path](docs/happy-path.md), [Resolve handoff](docs/resolve-handoff.md), [library choices and sources](docs/library-choices.md), and [current evidence](docs/current-state.md).
+New here? Start with the [guide](docs/guide.md), the [roadmap](roadmap.md) (and [v1.0 checklist](docs/v1.md)), then [make your own film](docs/new-film.md), the [cookbook](docs/cookbook.md), and [troubleshooting](docs/troubleshooting.md). See also [the production path](docs/happy-path.md), [Resolve handoff](docs/resolve-handoff.md), [library choices and sources](docs/library-choices.md), and [current evidence](docs/current-state.md).

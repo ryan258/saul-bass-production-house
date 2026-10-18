@@ -23,6 +23,18 @@ packages receive unique names under the film's output `handoffs/` directory.
 Copy or zip the **entire** folder, then check it after moving or unpacking it.
 The toolkit performs no upload, messaging, or publication.
 
+Unit 9 now has a separate native registration with explicit saved cut windows
+and an audio/timing identity guard. See [Unit 9 native handoff](unit9-motion-handoff.md).
+Its existing production files remain preserved. Shot 31 is rendered in the
+default output, and a complete 57-shot run with a collected handoff exists under
+`full-run-ti36vxyf/`. It passed validation earlier but is now stale against
+changed framework/browser identities. Its package contains `edit.otio`; separate
+timeline export, assembly, and check evidence remain open. That registration isolates each selected native scene in
+the temporary render copy to keep neighboring cached cut frames out of its body
+and handles. Arbitrary unregistered shared-project windows require review of
+their own renderer's cut-frame behavior; isolated per-shot projects avoid that
+dependency.
+
 For the optional native Motion Canvas version of The Signal:
 
 ```sh
@@ -37,8 +49,10 @@ For the optional native Motion Canvas version of The Signal:
 
 These commands use `examples/signal/production-motion.json` and a separate
 `production-motion/` output. `motion-shots` launches installed headless Chromium
-to run the official Motion Canvas renderer; it downloads no browser. TypeScript
-checks and contract tests do not prove browser rendering or visual acceptance.
+to run the official Motion Canvas renderer; it downloads no browser. A
+real run of this path (three shots, then validate, timeline, assembly, package
+and package-check) passed on 2026-10-17; that is mechanical evidence, not visual
+acceptance.
 The SVG and Motion Canvas examples illustrate the same story, with independent
 animation implementations; pixel equivalence is not claimed.
 
@@ -92,8 +106,8 @@ Motion source folder or rewrite external imports.
 the complete fingerprint: rebuild all required shots before production export.
 Planning and placeholder animatics remain available. Fresh draft SVG motion or
 sampled SVG stills are refused for Motion configurations; use one handled shot
-for a native review. Existing Unit 9 sources/outputs and its legacy manifest
-have not been migrated or rebuilt by this pass.
+for a native review. Existing Unit 9 sources/outputs and its legacy manifest remain preserved. A
+separate native registration now exists; see [Unit 9 native handoff](unit9-motion-handoff.md).
 
 ## What is in a package
 

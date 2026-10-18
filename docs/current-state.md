@@ -1,4 +1,189 @@
-# Current state — 2026-10-17
+# Current state — 2026-10-18
+
+## Native proof acceptance — 2026-10-18
+
+Ryan ran `./unit9 motion-proof` locally with the real Chromium renderer.
+Typechecking and rendering succeeded: 450 frames at 30 fps, 15 seconds,
+1920 × 1080 native delivery and 1920 × 600 labeled comparison. Native rendering
+took 13.387 seconds; the recorded render/encode build took 25.377 seconds.
+The Vite CJS deprecation warning did not prevent completion.
+
+Thirty-nine bounded follow-up checks passed against the actual outputs:
+receipt and movie hashes, current configured source/tool/browser fingerprint,
+unchanged native source/cue and baseline identities, media stream/color/audio
+metadata, all 12 inspection-frame hashes/dimensions, exact editor-WAV source
+window, and identical decoded baseline/native/comparison audio. The receipt is
+in the film's `production/motion-canvas/proof.json`; full render work was not
+retained, matching the default retention setting.
+
+Ryan then ran the automatic interruption check locally. It sent SIGINT at the
+first rendered-frame message; the proof process exited with signal 2 and reported
+its unique `.proof-build-17r1j3rg` diagnostic directory. All 37 protected files
+(successful delivery/receipt/samples, baseline, original audio, native sources
+and cues) remained byte-identical. The inspection-frame file set and default
+retention state were unchanged. The diagnostic directory and its source copy
+survived. The browser-closed error and KeyboardInterrupt traceback followed the
+deliberate interrupt; this is a successful preservation check, not a successful
+render. Its log/result and the baseline are saved under `/tmp/`.
+
+Ryan retried with `./unit9 motion-proof`; the real renderer completed without
+errors. Native rendering took 13.226 seconds and the recorded build took 27.513
+seconds. Forty-two follow-up checks passed: new receipt/media identity and
+metadata, all 12 inspection frames, current source/tool/browser identity, exact
+audio equality, all 22 original input files unchanged, and the interrupted
+attempt's complete diagnostic tree unchanged (19 files). A new receipt was
+published, successful retry scratch was removed, and the earlier diagnostic
+directory was retained. The retry log/result and comparison snapshots are under
+`/tmp/`.
+
+This establishes real native proof generation, preservation during interruption,
+and successful retry while retaining earlier diagnostic evidence. Native-editor
+acceptance and human screening remain pending. The full-suite result has not
+been supplied.
+
+## Full-film checkpoint acceptance — 2026-10-18
+
+Ryan ran the automatic full-film interruption check locally with 600-frame
+sections. The first section (frames 0–599) completed, verified, and saved its
+schema-2 clip/QA/cache checkpoint. The helper then sent SIGINT; the build exited
+with signal 2 while hashing a temporary concat link, before delivery promotion.
+All 141 protected existing files remained byte-identical, source/tool identity
+was unchanged, and unverified full-film scratch was cleaned up. The previous
+completed full-film delivery and the proof diagnostic work were preserved.
+
+Independent follow-up verification confirmed the first section passes the
+actual reuse gate (hash, 600-frame media metadata, cut audit, and both selected
+source PNGs). Cache schema 2 records exactly chunk `0`; the older unadopted
+section files remain on disk. The saved checkpoint hashes and timestamps match
+the interruption result. Log/result and a separate resume baseline are under
+`/tmp/`, ready to prove reuse of that first section during the next local run.
+
+Ryan resumed with `./unit9 motion-film --chunk-frames 600`. The log explicitly
+reports reuse of section 1 and verification of sections 2–12; the build completed
+in 317.828 seconds. Fifty-nine follow-up checks passed. Section 1's cache record,
+clip and two QA PNG hashes and timestamps are unchanged. All 108 protected input
+and proof-evidence files and the earlier 19-file proof diagnostic tree are intact.
+
+The delivered movie verifies at 7,194 frames, 30 fps, 1920 × 1080, 239.8 seconds,
+with all 57 native cut frames. All 12 sections pass the reuse gate. The new
+receipt's 21 artifact hashes match the movie, effective edit, 14 source samples,
+and exact five storyboard pages; its 57 decoded shot samples match the edit.
+Decoded delivery PCM independently matches the SVG baseline and the receipt.
+Recorded source-to-decoded picture errors cover all 14 samples and peak at
+0.8068 RGB mean absolute error (limit 3). Current source/tool/browser identity
+matches, successful scratch was removed, and human screening remains explicitly
+unrecorded. The detailed result is `/tmp/sbph-native-film-resume-result.json`.
+
+Full-film render/interruption/resumption acceptance has passed. The separate
+native handled-shot run remains stale (12 changed inventory entries, 57 shots).
+Its existing collected handoff is preserved. A temporary snapshot is prepared
+before rebuilding that run for the next handled-shot/export acceptance checks.
+
+## Final preservation review — 2026-10-18
+
+Recovery directories and their mappings are now prepared beside final outputs
+before replacement begins. A failed rollback leaves surviving old bytes outside
+disposable render work and reports the recovery path. Cleanup errors report
+retained temporary work without masking the original build error or turning a
+completed save into a failed build.
+
+Shared and native builders check known original input paths for collisions with
+managed outputs.
+Shot reuse rechecks media hashes after probing, and source identity is checked
+after staging the shot/proof receipt and immediately before promotion. Audio
+comparison binds its decoded samples to a stable source hash; conform refuses
+to publish evidence when current build sources have changed during checking.
+Malformed saved evidence remains inspectable through status/resume commands.
+
+All 137 distinct targeted tests passed across grouped promotion/shared builders,
+shot resumption, standalone native proof/full-film preservation, input collision
+guards, native shot integration, audio windows/conform, and stale status/launcher
+routing. One older failure fixture was corrected to reach the source check after
+receipt staging; its 15-test module then passed. These checks use temporary film
+trees and tiny media; native browser rendering is substituted. No production
+render, browser launch, or full suite was run.
+
+These safeguards cover caught failures and cancellation. Promotion spans several
+filesystem operations and does not promise an atomic delivery across a forced
+process kill or power loss. Production renders and human/editor acceptance
+remain separate from the focused regression checks.
+
+## Standalone native preservation pass — 2026-10-18
+
+`motion-proof` now stages its native movie, comparison, receipt, source samples,
+and optional retained frame sequence as one delivery. `motion-film` stages its
+movie, verification, effective edit, source samples, and exact storyboard page
+set together, including removal of obsolete pages. Both restore previous
+artifacts on caught promotion failures or cancellation and render source copies.
+Failed proof work is retained at a reported unique diagnostic path; unverified
+full-film scratch is cleaned up while verified chunks remain resumable.
+
+Full-film cache schema 2 checks current source, browser/tool, specification and
+chunk-size identities plus media metadata, ranges, hashes, cuts and per-section
+source-frame evidence. Old cache files remain preserved, with no automatic
+adoption. New verification receipts mark human screening as not recorded.
+Incomplete rollback reports surviving backups outside temporary render work.
+
+Seventy-five distinct targeted tests passed for this pass: standalone proof and
+full-film failure/recovery, native audio and timing contracts, grouped promotion,
+shared output preservation, and shot resumption. Tests include tiny real FFmpeg
+encoding/mux/audio checks with the native browser renderer substituted. Random
+seed/metadata identity and post-promotion cleanup errors have focused coverage.
+No production render, browser launch, or full suite was run.
+
+This implementation does not rebuild Unit 9, alter its preserved native or SVG
+deliveries, or establish new browser/native-editor/human acceptance.
+
+## Recovery implementation pass
+
+The shared production path now stages SVG shots, proofs, and assembly before
+replacement; paired shot manifests/proof receipts roll back on caught promotion
+failures. `shots --resume` verifies current record ranges, source identity, hashes,
+frame counts, rates, and dimensions before reusing clips. Plain `shots` still
+requests fresh rendering. Stale status and validation errors identify changed
+files and nested browser/tool/settings fields. Native `motion-status` and
+`motion-resume` support explicit `--run NAME` selection of an existing run.
+
+Delivery/conform audio comparisons use the source-zero editorial window, and
+proof comparisons use their selected frame interval. The original recording's
+hash and source window are recorded; delivered audio is decoded in full so an
+unintended tail is still detected. Original audio is never cropped on disk.
+
+The complete native run below remains preserved and stale against current
+framework/browser identities. This implementation does not rebuild it, relabel
+its receipts, or establish new native-editor/human acceptance. The documented
+earlier successful validations are historical. See [recovery and validation](production-validation.md).
+
+This pass passed 86 distinct targeted tests, including temporary real SVG
+render/assembly, copied Signal end-to-end, audio-window/conform, failure and
+cancellation preservation, resume/reuse, stale diagnostics, and native launcher
+checks. Browser rendering and the full suite were not run. Native movie/editor
+acceptance remains separate.
+
+## Unit 9 native handled-shot registration
+
+All 57 native cut windows are registered separately in
+`examples/unit-9-motion.json`, with a saved effective edit and a source/audio
+identity guard. New output belongs to the toolkit's ignored
+`output/unit-9-motion-handled/`, outside the original film tree. Shot 31 is
+verified at 1920 × 1080, 30 fps: 44 body frames plus 12 held frames at each edge.
+Registered renders isolate one native scene in a temporary source copy, avoiding
+the preceding scene visible at the full film's saved cut boundary. Sixteen
+focused tests passed. All 376 existing Unit 9 baseline files remain byte-identical
+(as recorded when that pass ran; not re-measured since).
+
+A complete 57-shot native render also exists at
+`output/unit-9-motion-handled/full-run-ti36vxyf/`: build schema 2, 12-frame
+handles, and a collected handoff folder (`handoffs/H270a417f925c`, 58 media
+files). On 2026-10-17 `./sbph validate` on its `production.json` passed (57
+current shots, ranges, hashes, source audio) and `package-check` passed on the
+handoff. Its configuration is identical to `examples/unit-9-motion.json` except
+for absolute root and output paths. Its collected handoff includes `edit.otio`,
+but it has no separate timeline export/verification receipt, assembly,
+`check`, or `conform` evidence, and no human screening. The default
+`output/unit-9-motion-handled/` still holds only shot 31, so the short commands
+(`./unit9 motion-validate`, `motion-timeline`, ...) still refuse that folder as
+incomplete. See [Unit 9 native handoff](unit9-motion-handoff.md).
 
 ## Portable editorial pass
 
@@ -10,17 +195,23 @@ original recording, notes/intent, and integrity hashes. A relocated folder can
 be checked without its source project. Read-only editor-return comparison
 reports timing/media/structure changes and unsupported constructs.
 
-This pass has not registered or rebuilt Unit 9 in the new native shot path.
+Unit 9 now has a separate registration for all 57 native cut windows. Shot 31
+is rendered in the default output; a full 57-shot render and handoff exist in
+`full-run-ti36vxyf/` but are not yet assembled, checked, or conformed. See
+[Unit 9 native handoff](unit9-motion-handoff.md).
 Existing Unit 9 movies, shots, timeline, and evidence remain preserved. Native
-editor import and a real browser render of the new shot path remain separate
-acceptance steps. See [portable editorial workflow](portable-editorial.md).
+editor import remains a separate acceptance step. See [portable editorial workflow](portable-editorial.md).
 
 Focused pass-four evidence: 22 distinct Python tests passed, including real
 tiny PNG/video encoding, shared validation/assembly, relocated collected media,
 CLI checking/comparison, representative human edits, and malformed inputs.
 Three native Signal scene projects passed TypeScript checks. The native browser
-exporter was substituted in the new shot-contract tests; no real render of that
-new path or full suite was run. All 376 files in the Unit 9 preservation baseline
+exporter was substituted in the new shot-contract tests of that pass. A later
+check ran the real path: on 2026-10-17 the native Signal rendered all three
+shots in headless Chromium and passed `validate`, timeline export, assembly,
+`package`/`package-check`, and generic `check` (run from a copy outside the
+checkout). That earlier pass reported 102 passing tests; this is historical
+evidence, not a current full-suite result. All 376 files in the Unit 9 preservation baseline
 retained their SHA-256 values, with no new film files added.
 
 ## Creative workflow pass
@@ -86,13 +277,13 @@ not rebuild the full film or establish native editor acceptance.
 
 ## Boundaries
 
-Resolve and its scripting SDK were not found in standard application locations. Native import, marker appearance, project color management, and device playback are unverified. SVG rigs and motion are baked within shot clips. Human timing decisions remain human acceptance.
+Resolve and its scripting SDK were not found in standard application locations on this host. Native import, marker appearance, project color management, and device playback are unverified; `sbph resolve-check` (Studio) and `sbph resolve-record` (Free) now exist to produce that evidence ([resolve-acceptance.md](resolve-acceptance.md)). SVG rigs and motion are baked within shot clips. Human timing decisions remain human acceptance.
 
 The initial handled source inventory was captured after the first complete build and focused media verification, explicitly labeled as a current-state baseline. Future source changes invalidate cached partial builds. The original full-frame renderer has a byte-verified source snapshot for its render record.
 
 ## Useful next action
 
-Import `../nonsense/unit-9/svg-film-v01/production/unit-9-human-edit.otio` in Resolve. Lock the audio track and make the timing pass. Keep the exported human edit as a new timeline and an OTIO copy.
+Follow the [v1.0 checklist](v1.md): rebuild the stale native handled-shot run, finish timeline → assembly → check → conform, package, then do the Resolve acceptance ([resolve-acceptance.md](resolve-acceptance.md)). The older legacy-SVG OTIO import remains possible but is no longer the target.
 
 ## Motion Canvas proof
 

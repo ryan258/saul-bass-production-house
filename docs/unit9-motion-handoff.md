@@ -1,0 +1,143 @@
+# Unit 9 native handled shots and portable handoff
+
+Unit 9's existing native full-film project is registered in
+`examples/unit-9-motion.json`. Its effective edit snapshot lives in
+`examples/unit-9-motion/data/edit.json`. The registration resolves all 57 shot
+windows from the full-film `edit.json` and saved `film.meta` cut cues. It retains
+7,194 body frames at 30 fps, 1920 × 1080, the original recording, and 12-frame
+handles at each edge.
+
+New media and packages go to **`output/unit-9-motion-handled/` in this toolkit**.
+That ignored directory is outside the original film tree. The legacy config,
+SVG shots, full native movie, proof, timelines, source project, and audio remain
+in their existing locations. The new configuration uses generic production
+checks; it does not apply the legacy SVG-specific verification profile.
+
+## Short commands
+
+```sh
+./unit9 motion-register
+./unit9 motion-status
+./unit9 motion-resume
+./unit9 motion-shots --shot 31
+```
+
+The native status/resume commands inspect this configuration and its workflow
+records without rendering. Native `motion-note`, `motion-notes`, `motion-resolve`,
+`motion-reanchor`, `motion-intent`, and `motion-check` use the same configuration.
+Bare `./unit9 status` and `resume` retain the legacy SVG target.
+
+All of these routed native commands accept `--run NAME` as their first option to
+select an existing run's `production.json`. For the complete run described below:
+
+```sh
+./unit9 motion-status --run full-run-ti36vxyf
+./unit9 motion-resume --run full-run-ti36vxyf
+```
+
+This selection applies only to that invocation. It does not retarget default
+renders, refresh registration, or relabel media. Stale status and validation
+show the changed inventory files and browser/tool/settings fields. The shared
+framework still fingerprints all toolkit Python files, so these recovery changes
+invalidate older shot receipts. The saved handoff remains independently checkable.
+
+Registration alone starts no render. Running it again with identical inputs
+leaves the registered files untouched. The bounded verification shot is **31,
+“A glance behind”**, native source frames 3776–3819: 44 body frames plus 12-frame
+edge holds at each side, for a 68-frame clip. The shared renderer uses a temporary
+source copy so browser metadata caches do not modify Unit 9's sources. For this
+registered named-cut project, it isolates the selected scene and rebases its
+animation/cut events to local time before rendering, then restores global frame
+numbering. This prevents a preceding scene's cached cut frame from entering the
+body or held head frames. Arbitrary unregistered frame windows retain their
+existing rendering behavior.
+
+The default output folder holds only shot 31, so the full gate, timeline,
+assembly, and package commands deliberately reject it as incomplete. The
+preserved full-film movie and legacy shot files are not silently adopted as
+newly rendered shot evidence.
+
+**An existing complete run.** `output/unit-9-motion-handled/full-run-ti36vxyf/`
+holds all 57 handled shots (schema 2, 12-frame handles), `shots.json`, and one
+collected handoff, `handoffs/H270a417f925c`. Its `production.json` matches
+`examples/unit-9-motion.json` except for absolute `root` and `output` paths.
+Earlier on 2026-10-17 `./sbph validate .../full-run-ti36vxyf/production.json` passed
+and `./sbph package-check` passed on that handoff (58 media files). A later review
+found the run stale against changed browser/framework identities; its collected
+handoff still passed integrity checks. Those earlier results are historical.
+The package contains `edit.otio`; the run has no separate timeline export,
+assembly, `check`, `conform`, or human screening. Run those against its
+`production.json`, or select this existing run with `--run full-run-ti36vxyf`
+as the first option to the corresponding `./unit9 motion-*` command. Omitting
+`--run` selects the default partial output. Record the result here:
+
+```sh
+./sbph timeline output/unit-9-motion-handled/full-run-ti36vxyf/production.json
+./sbph assemble output/unit-9-motion-handled/full-run-ti36vxyf/production.json
+./sbph check output/unit-9-motion-handled/full-run-ti36vxyf/production.json
+```
+
+After intentionally accepting the current source/toolchain for a new render,
+`./unit9 motion-shots --run full-run-ti36vxyf --resume` renders the required shots
+and can continue after interruption. It reuses only current records whose ranges,
+hashes, and probed media pass the shared gate. It will rerender the entire set if
+the build identity changed. Omitting `--run` targets the default partial output.
+Plain `motion-shots` without `--resume` always requests fresh selected shots.
+
+`conform` additionally needs a separate `reference` movie in the configuration.
+
+A complete render already exists (see below). To make a new one in the default
+output, run these explicitly:
+
+```sh
+./unit9 motion-shots
+./unit9 motion-validate
+./unit9 motion-timeline
+./unit9 motion-assemble
+./unit9 motion-package
+```
+
+The first command renders the complete film as separate handled shots. It has
+not been run against the default output. Packaging collects all handled clips, the
+original recording, relative-reference OTIO, and editorial context into a new
+folder under `output/unit-9-motion-handled/handoffs/`. Check or compare that
+folder using `./sbph package-check /path/to/handoff` and
+`./sbph compare-return /path/to/handoff --returned /path/to/return.otio`.
+See [portable editorial workflow](portable-editorial.md) for package contents
+and comparison limits.
+
+## Saved timing changes
+
+The configuration records the native plan, cue metadata, render specification,
+and original audio identities. Its registered edit and explicit source windows
+must match that saved native plan. A source change that affects these identities
+blocks rendering and production export, with a stale-registration message.
+After reviewing intended native cue changes:
+
+```sh
+./unit9 motion-register --refresh
+```
+
+This updates only the owned registration config and edit snapshot. It preserves
+native sources and existing outputs and starts no render. Old shot records fail
+the current fingerprint; rebuild the required complete shot set before export.
+Keep the original recording's duration and bytes. Audio replacement or shortened
+native timelines are rejected rather than silently registered.
+
+The generated edit snapshot retains native scene actions, narration anchors,
+animation information, and selected accents for handoff context. The current
+native plan has no generic `events` array, so this registration does not invent
+OTIO track markers from native action event names. Existing legacy timeline
+markers remain preserved in the original timeline.
+
+## Verification scope
+
+One real native shot was rendered, decoded, and checked for frame counts, rate,
+dimensions, color tags, file identity, current build fingerprint, and held edges.
+The original full-film frame 3776 still shows the preceding scene. Its first
+visible operator frame is 3777; the isolated first body pose was compared with
+that frame. The middle and last body poses were compared at 3798 and 3819.
+Mean RGB errors at 480 × 270 were 0.704, 0.136, and 0.109 out of 255. Both held
+edges differ by less than 0.011 mean RGB levels after decoding. Sixteen focused
+registration/render contract tests passed. This bounded check does not cover the
+complete run's pictures, timeline, assembly, or native editor import/export.
