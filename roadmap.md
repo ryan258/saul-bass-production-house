@@ -55,12 +55,12 @@ For the concrete delivery checklist and run orders, see the [v1.0 Checklist](doc
 ### Milestone 3: Road to v1.0 (In Progress)
 Tracked in detail in [docs/v1.md](docs/v1.md).
 
-- [x] **Test suite integrity**: Full Python suite passes (206 tests passing).
+- [x] **Test suite integrity**: Full Python suite passes (213 tests passing).
 - [x] **Unit 9 native full film proof**: 15s shutdown proof rendered and interruption-tested.
 - [x] **Unit 9 native full film assembly**: 7,194-frame 239.8s film rendered and checkpointed.
-- [ ] **Unit 9 handled shots**: Re-render 57 native handled shots against current toolchain fingerprint (`./unit9 motion-shots --run full-run-ti36vxyf --resume`).
-- [ ] **Native timeline & assembly validation**: Run `motion-timeline`, `motion-assemble`, `motion-check`, and `conform` on the full run.
-- [ ] **Package verification**: Build collected handoff and verify with `package-check`.
+- [x] **Unit 9 handled shots**: 57 native handled shots rendered and validated (`full-run-ti36vxyf`).
+- [x] **Native timeline & assembly validation**: Timeline with 33 accent/impact markers, assembly (7,194 frames), `check`, and `conform` (171 samples, max RGB error 0.286) passed.
+- [x] **Package verification**: Collected handoff built and verified with `package-check` (`handoffs/H615c266ae878`, 58 media files).
 - [ ] **DaVinci Resolve round-trip acceptance**: Import OTIO into real DaVinci Resolve, perform editorial cuts, export OTIO return, and run `resolve-check` / `compare-return`.
 - [ ] **Human screening**: Human editorial screening of delivered review assembly.
 - [ ] **v1.0.0 Release**: Version bump, tag, and publish documentation.

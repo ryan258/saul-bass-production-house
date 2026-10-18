@@ -116,10 +116,10 @@ Unit 9's native project also has a separate handled-shot registration:
 `./unit9 motion-shots --shot 31` renders one bounded shot to
 `output/unit-9-motion-handled/`. The original film tree stays intact. See
 [Unit 9 native handoff](docs/unit9-motion-handoff.md) for the complete workflow,
-refresh guard, and what has and has not been verified (shot 31 in the default
-output; a complete 57-shot run in `output/unit-9-motion-handled/full-run-ti36vxyf/`
-that passed validation earlier but is now stale against changed framework/browser
-identities, and is not yet assembled or checked).
+refresh guard, and verification status (shot 31 in the default output; a
+complete 57-shot run in `output/unit-9-motion-handled/full-run-ti36vxyf/`
+that has been rendered, validated, assembled, conformed against viewing
+reference, and packaged into a verified handoff).
 
 For a collected handoff that can move with its media, use `./signal package` or
 `./sbph package /path/to/production.json`. Check it with

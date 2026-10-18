@@ -26,12 +26,12 @@ The toolkit performs no upload, messaging, or publication.
 Unit 9 now has a separate native registration with explicit saved cut windows
 and an audio/timing identity guard. See [Unit 9 native handoff](unit9-motion-handoff.md).
 Its existing production files remain preserved. Shot 31 is rendered in the
-default output, and a complete 57-shot run with a collected handoff exists under
-`full-run-ti36vxyf/`. It passed validation earlier but is now stale against
-changed framework/browser identities. Its package contains `edit.otio`; separate
-timeline export, assembly, and check evidence remain open. That registration isolates each selected native scene in
-the temporary render copy to keep neighboring cached cut frames out of its body
-and handles. Arbitrary unregistered shared-project windows require review of
+default output, and a complete 57-shot run with a verified collected handoff exists
+under `full-run-ti36vxyf/` (`handoffs/H615c266ae878`). It has passed shot rendering,
+validation, timeline export (`unit-9-motion-human-edit.otio`), assembly, `check`,
+and `conform` against the full-film reference. That registration isolates each selected
+native scene in the temporary render copy to keep neighboring cached cut frames out of
+its body and handles. Arbitrary unregistered shared-project windows require review of
 their own renderer's cut-frame behavior; isolated per-shot projects avoid that
 dependency.
 

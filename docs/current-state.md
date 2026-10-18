@@ -75,9 +75,18 @@ matches, successful scratch was removed, and human screening remains explicitly
 unrecorded. The detailed result is `/tmp/sbph-native-film-resume-result.json`.
 
 Full-film render/interruption/resumption acceptance has passed. The separate
-native handled-shot run remains stale (12 changed inventory entries, 57 shots).
-Its existing collected handoff is preserved. A temporary snapshot is prepared
-before rebuilding that run for the next handled-shot/export acceptance checks.
+native handled-shot run in `full-run-ti36vxyf` has now been rendered, validated,
+assembled, conformed against the viewing reference, and packaged into a verified handoff.
+
+## Unit 9 native handled run, conform, and handoff acceptance — 2026-10-18
+
+The native handled run `output/unit-9-motion-handled/full-run-ti36vxyf/` was completed, validated, conformed, and packaged:
+- **57 handled shots**: Rendered and validated against build schema 2 with 12-frame handles; hashes, ranges, and probed media match.
+- **Timeline interchange**: `unit-9-motion-human-edit.otio` exported with 33 timeline markers derived from selected accents and physical impacts via `story_events()` in `validation.py`.
+- **Assembly & verification**: `assembly.mp4` assembled (7,194 frames, 239.8s at 30 fps); `check` passed across all 57 cuts.
+- **Conform**: Verified against native full-film viewing reference (`unit-9-motion-canvas-v01.mp4`). Using `verification.conform_first_frame_offset: 1` (accounting for the continuous reference cut showing the previous scene on the first frame), 171 boundary and midpoint samples yielded a maximum RGB MAE of 0.286/255 (mean 0.162/255). Audio alignment confirmed with mono correlation 0.999961 and zero sample difference at 16 kHz.
+- **Package verification**: Handoff `handoffs/H615c266ae878` (58 media files, relative OTIO, editorial context) passed `package-check`.
+- **Automated finish script**: `./scripts/unit9-finish.sh [RUN]` automates conform, packaging, and package-check.
 
 ## Final preservation review — 2026-10-18
 
@@ -283,7 +292,7 @@ The initial handled source inventory was captured after the first complete build
 
 ## Useful next action
 
-Follow the [v1.0 checklist](v1.md): rebuild the stale native handled-shot run, finish timeline → assembly → check → conform, package, then do the Resolve acceptance ([resolve-acceptance.md](resolve-acceptance.md)). The older legacy-SVG OTIO import remains possible but is no longer the target.
+Follow the [v1.0 checklist](v1.md): perform DaVinci Resolve round-trip acceptance on the verified handoff (`handoffs/H615c266ae878` or `~/handoffs/signal-v1`) following [resolve-acceptance.md](resolve-acceptance.md), followed by human screening of the delivered film.
 
 ## Motion Canvas proof
 

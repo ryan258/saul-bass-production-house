@@ -58,23 +58,17 @@ preserved full-film movie and legacy shot files are not silently adopted as
 newly rendered shot evidence.
 
 **An existing complete run.** `output/unit-9-motion-handled/full-run-ti36vxyf/`
-holds all 57 handled shots (schema 2, 12-frame handles), `shots.json`, and one
-collected handoff, `handoffs/H270a417f925c`. Its `production.json` matches
-`examples/unit-9-motion.json` except for absolute `root` and `output` paths.
-Earlier on 2026-10-17 `./sbph validate .../full-run-ti36vxyf/production.json` passed
-and `./sbph package-check` passed on that handoff (58 media files). A later review
-found the run stale against changed browser/framework identities; its collected
-handoff still passed integrity checks. Those earlier results are historical.
-The package contains `edit.otio`; the run has no separate timeline export,
-assembly, `check`, `conform`, or human screening. Run those against its
-`production.json`, or select this existing run with `--run full-run-ti36vxyf`
-as the first option to the corresponding `./unit9 motion-*` command. Omitting
-`--run` selects the default partial output. Record the result here:
+holds all 57 handled shots (schema 2, 12-frame handles), `shots.json`, timeline
+interchange (`unit-9-motion-human-edit.otio` with 33 derived accent/impact markers),
+assembly (`assembly.mp4`, 7,194 frames), passing `check` and `conform` verification
+(`assembly-verification.json`, 171 boundary/midpoint samples, max RGB error 0.286),
+and a verified collected handoff (`handoffs/H615c266ae878`, 58 media files).
+Its `production.json` matches `examples/unit-9-motion.json` (including
+`verification.conform_first_frame_offset: 1`) except for absolute `root` and `output` paths.
+The finishing sequence is automated via `./scripts/unit9-finish.sh [RUN]`:
 
 ```sh
-./sbph timeline output/unit-9-motion-handled/full-run-ti36vxyf/production.json
-./sbph assemble output/unit-9-motion-handled/full-run-ti36vxyf/production.json
-./sbph check output/unit-9-motion-handled/full-run-ti36vxyf/production.json
+./scripts/unit9-finish.sh full-run-ti36vxyf
 ```
 
 After intentionally accepting the current source/toolchain for a new render,
@@ -125,10 +119,14 @@ Keep the original recording's duration and bytes. Audio replacement or shortened
 native timelines are rejected rather than silently registered.
 
 The generated edit snapshot retains native scene actions, narration anchors,
-animation information, and selected accents for handoff context. The current
-native plan has no generic `events` array, so this registration does not invent
-OTIO track markers from native action event names. Existing legacy timeline
-markers remain preserved in the original timeline.
+animation information, and selected accents for handoff context. The native
+plan has no top-level `events` array, so timeline export and packaging derive
+markers from it: each selected accent becomes a green marker named
+`<shot> / <meaning>`, and each physical impact (pulse) not already at an accent
+frame becomes a cyan `<shot> / impact` marker. Animation start/end events are
+deliberately left out (generic names like `a-0`, 83 of them). An edit that
+defines `events` itself is used as written. The legacy SVG timeline's markers
+remain in the original timeline.
 
 ## Verification scope
 
@@ -139,5 +137,6 @@ visible operator frame is 3777; the isolated first body pose was compared with
 that frame. The middle and last body poses were compared at 3798 and 3819.
 Mean RGB errors at 480 × 270 were 0.704, 0.136, and 0.109 out of 255. Both held
 edges differ by less than 0.011 mean RGB levels after decoding. Sixteen focused
-registration/render contract tests passed. This bounded check does not cover the
-complete run's pictures, timeline, assembly, or native editor import/export.
+registration/render contract tests passed. The full 57-shot run has now passed
+timeline export, assembly, check, conform, and packaging; native editor import/export
+in Resolve remains the pending acceptance gate.
