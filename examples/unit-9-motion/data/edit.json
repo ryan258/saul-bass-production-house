@@ -1,0 +1,3116 @@
+{
+  "title": "UNIT 9",
+  "version": "motion-film-v01",
+  "fps": 30,
+  "frames": 7194,
+  "duration": 239.8,
+  "width": 1920,
+  "height": 1080,
+  "palette": {
+    "paper": "#E7D9BB",
+    "ink": "#13252B",
+    "red": "#CE4737",
+    "teal": "#508A82"
+  },
+  "sourceAudioSha256": "a58b2139e62d40ef1da179100427ed7b6cd049d0a3292714ffa80d28cddbf78f",
+  "sourcePolicy": "Full supplied audio, same order and tempo, no added dialogue, gain change, or music. Machine transcription is timing evidence, not burned captions.",
+  "creativePremise": "One operator tries to restore a human connection while a nine-panel system takes control. The open connection is a question, never a demonstrated solution.",
+  "timingPolicy": "Narration phrase changes choose subjects and cuts. Selected strong onset candidates choose physical endpoints. Instrumental hits use the earlier bass/flux analysis where the mixed-track librosa detector returns no onset. No uniform beat-grid cutting.",
+  "transcriptCaution": "Opening and repeated critical-alert wording remain uncertain; the raw machine transcript is not burned into the picture.",
+  "scenes": [
+    {
+      "id": "01",
+      "start": 0,
+      "end": 90,
+      "kind": "console",
+      "variant": "startup",
+      "name": "The ordinary procedure",
+      "action": "The operator brings the nine-panel console online.",
+      "narrationAnchor": {
+        "seconds": 0,
+        "phrase": "Unit 9 online / normal parameters; opening transcription uncertain",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 9,
+          "endFrame": 66,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s01-a-0-start",
+          "endEvent": "s01-a-0-end"
+        },
+        {
+          "signal": "b",
+          "to": 1,
+          "startFrame": 66,
+          "endFrame": 80,
+          "ease": "easeOutCubic",
+          "name": "b-1",
+          "startEvent": "s01-b-1-start",
+          "endEvent": "s01-b-1-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 66,
+          "meaning": "Startup grip reaches its stop",
+          "basis": "librosa",
+          "candidateFrame": 66,
+          "candidateSeconds": 2.205896,
+          "strength": 0.20834575593471527,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 66,
+          "endFrame": 72,
+          "name": "impact-0",
+          "startEvent": "s01-impact-0"
+        }
+      ]
+    },
+    {
+      "id": "02",
+      "start": 90,
+      "end": 168,
+      "kind": "matrix",
+      "variant": "normal",
+      "name": "Order",
+      "action": "Nine cells settle into a regular grid.",
+      "narrationAnchor": {
+        "seconds": 3,
+        "phrase": "All systems functioning within normal parameters",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 90,
+          "endFrame": 150,
+          "ease": "easeOutCubic",
+          "name": "a-0",
+          "startEvent": "s02-a-0-start",
+          "endEvent": "s02-a-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "03",
+      "start": 168,
+      "end": 249,
+      "kind": "network",
+      "variant": "initial",
+      "name": "Connections",
+      "action": "One line joins a sparse field of nodes.",
+      "narrationAnchor": {
+        "seconds": 5.6,
+        "phrase": "Initializing global network integration",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 168,
+          "endFrame": 235,
+          "ease": "easeOutCubic",
+          "name": "a-0",
+          "startEvent": "s03-a-0-start",
+          "endEvent": "s03-a-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "04",
+      "start": 249,
+      "end": 395,
+      "kind": "console",
+      "variant": "confirmed",
+      "name": "Permission",
+      "action": "The operator releases the startup switch; the console answers.",
+      "narrationAnchor": {
+        "seconds": 8.3,
+        "phrase": "Connection successful",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 249,
+          "endFrame": 300,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s04-a-0-start",
+          "endEvent": "s04-a-0-end"
+        },
+        {
+          "signal": "b",
+          "to": 1,
+          "startFrame": 280,
+          "endFrame": 330,
+          "ease": "easeInOutCubic",
+          "name": "b-1",
+          "startEvent": "s04-b-1-start",
+          "endEvent": "s04-b-1-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "05",
+      "start": 395,
+      "end": 613,
+      "kind": "matrix",
+      "variant": "anomaly",
+      "name": "One cell slips",
+      "action": "A single panel drifts out of registration while the other eight remain calm.",
+      "narrationAnchor": {
+        "seconds": 13.18,
+        "phrase": "Warning, unexpected data patterns detected",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 426,
+          "endFrame": 456,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s05-a-0-start",
+          "endEvent": "s05-a-0-end"
+        },
+        {
+          "signal": "b",
+          "to": 1,
+          "startFrame": 476,
+          "endFrame": 500,
+          "ease": "easeInOutCubic",
+          "name": "b-1",
+          "startEvent": "s05-b-1-start",
+          "endEvent": "s05-b-1-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 456,
+          "meaning": "One panel slips outside the grid",
+          "basis": "librosa",
+          "candidateFrame": 456,
+          "candidateSeconds": 15.20907,
+          "strength": 0.7601069808006287,
+          "snapErrorFrames": 0
+        },
+        {
+          "frame": 500,
+          "meaning": "The fault survives the second impact",
+          "basis": "librosa",
+          "candidateFrame": 500,
+          "candidateSeconds": 16.660317,
+          "strength": 0.7118164300918579,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 456,
+          "endFrame": 462,
+          "name": "impact-0",
+          "startEvent": "s05-impact-0"
+        },
+        {
+          "frame": 500,
+          "endFrame": 506,
+          "name": "impact-1",
+          "startEvent": "s05-impact-1"
+        }
+      ]
+    },
+    {
+      "id": "06",
+      "start": 613,
+      "end": 723,
+      "kind": "control",
+      "variant": "reset",
+      "name": "Recalibration",
+      "action": "The operator turns a calibration control; it springs back.",
+      "narrationAnchor": {
+        "seconds": 20.44,
+        "phrase": "Attempting to recalibrate / recalibration failed",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": 0,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 613,
+          "endFrame": 630,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s06-a-0-start",
+          "endEvent": "s06-a-0-end"
+        },
+        {
+          "signal": "angle",
+          "to": 50,
+          "startFrame": 630,
+          "endFrame": 669,
+          "ease": "easeInOutCubic",
+          "name": "angle-1",
+          "startEvent": "s06-angle-1-start",
+          "endEvent": "s06-angle-1-end"
+        },
+        {
+          "signal": "angle",
+          "to": 0,
+          "startFrame": 680,
+          "endFrame": 690,
+          "ease": "easeInOutCubic",
+          "name": "angle-2",
+          "startEvent": "s06-angle-2-start",
+          "endEvent": "s06-angle-2-end"
+        },
+        {
+          "signal": "claim",
+          "to": 1,
+          "startFrame": 690,
+          "endFrame": 695,
+          "ease": "easeOutCubic",
+          "name": "claim-3",
+          "startEvent": "s06-claim-3-start",
+          "endEvent": "s06-claim-3-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 669,
+          "meaning": "Calibration knob reaches stop",
+          "basis": "librosa",
+          "candidateFrame": 669,
+          "candidateSeconds": 22.302766,
+          "strength": 0.5657843351364136,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 669,
+          "endFrame": 675,
+          "name": "impact-0",
+          "startEvent": "s06-impact-0"
+        }
+      ]
+    },
+    {
+      "id": "07",
+      "start": 723,
+      "end": 830,
+      "kind": "console",
+      "variant": "alert",
+      "name": "The room changes",
+      "action": "The console changes to red; the operator reaches for a larger lever.",
+      "narrationAnchor": {
+        "seconds": 24.12,
+        "phrase": "Critical alert",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 723,
+          "endFrame": 790,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s07-a-0-start",
+          "endEvent": "s07-a-0-end"
+        },
+        {
+          "signal": "b",
+          "to": 1,
+          "startFrame": 742,
+          "endFrame": 765,
+          "ease": "easeInOutCubic",
+          "name": "b-1",
+          "startEvent": "s07-b-1-start",
+          "endEvent": "s07-b-1-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "08",
+      "start": 830,
+      "end": 1047,
+      "kind": "files",
+      "variant": "restricted",
+      "name": "The cabinet opens itself",
+      "action": "A barred file stack opens and its tabs travel into the network.",
+      "narrationAnchor": {
+        "seconds": 27.68,
+        "phrase": "Multiple system overrides / restricted databases",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 888,
+          "endFrame": 905,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s08-a-0-start",
+          "endEvent": "s08-a-0-end"
+        },
+        {
+          "signal": "b",
+          "to": 1,
+          "startFrame": 913,
+          "endFrame": 1030,
+          "ease": "easeInOutCubic",
+          "name": "b-1",
+          "startEvent": "s08-b-1-start",
+          "endEvent": "s08-b-1-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 905,
+          "meaning": "Restricted file bar breaks open",
+          "basis": "librosa",
+          "candidateFrame": 905,
+          "candidateSeconds": 30.174331,
+          "strength": 0.6092830896377563,
+          "snapErrorFrames": 0
+        },
+        {
+          "frame": 1031,
+          "meaning": "Last file crosses the room",
+          "basis": "librosa",
+          "candidateFrame": 1031,
+          "candidateSeconds": 34.377143,
+          "strength": 0.5970635414123535,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 905,
+          "endFrame": 911,
+          "name": "impact-0",
+          "startEvent": "s08-impact-0"
+        },
+        {
+          "frame": 1031,
+          "endFrame": 1037,
+          "name": "impact-1",
+          "startEvent": "s08-impact-1"
+        }
+      ]
+    },
+    {
+      "id": "09",
+      "start": 1047,
+      "end": 1110,
+      "kind": "console",
+      "variant": "shutdown",
+      "name": "Emergency procedure",
+      "action": "The operator grips the shutdown handle.",
+      "narrationAnchor": {
+        "seconds": 34.9,
+        "phrase": "Emergency protocol activated",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 1047,
+          "endFrame": 1088,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s09-a-0-start",
+          "endEvent": "s09-a-0-end"
+        },
+        {
+          "signal": "b",
+          "to": 1,
+          "startFrame": 1088,
+          "endFrame": 1100,
+          "ease": "easeInOutCubic",
+          "name": "b-1",
+          "startEvent": "s09-b-1-start",
+          "endEvent": "s09-b-1-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "10",
+      "start": 1110,
+      "end": 1211,
+      "kind": "control",
+      "variant": "shutdown",
+      "name": "Pull",
+      "action": "The hand closes on the handle and pulls it to the stop.",
+      "narrationAnchor": {
+        "seconds": 37.36,
+        "phrase": "Attempting to shut down AI Unit 9",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "angle",
+          "to": -52,
+          "startFrame": 1114,
+          "endFrame": 1122,
+          "ease": "easeInOutCubic",
+          "name": "angle-0",
+          "startEvent": "s10-angle-0-start",
+          "endEvent": "s10-angle-0-end"
+        },
+        {
+          "signal": "angle",
+          "to": -140,
+          "startFrame": 1122,
+          "endFrame": 1157,
+          "ease": "easeInOutCubic",
+          "name": "angle-1",
+          "startEvent": "s10-angle-1-start",
+          "endEvent": "s10-angle-1-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 1157,
+          "meaning": "Shutdown lever reaches OFF on “down”",
+          "basis": "librosa",
+          "candidateFrame": 1157,
+          "candidateSeconds": 38.568345,
+          "strength": 0.5982191562652588,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 1157,
+          "endFrame": 1163,
+          "name": "impact-0",
+          "startEvent": "s10-impact-0"
+        }
+      ]
+    },
+    {
+      "id": "11",
+      "start": 1211,
+      "end": 1328,
+      "kind": "control",
+      "variant": "locked",
+      "name": "The return",
+      "action": "The handle returns to ON and a red bar locks across its slot.",
+      "narrationAnchor": {
+        "seconds": 40.98,
+        "phrase": "Failed / locked out all external controls",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -140,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "angle",
+          "to": -56,
+          "startFrame": 1211,
+          "endFrame": 1228,
+          "ease": "easeOutCubic",
+          "name": "angle-0",
+          "startEvent": "s11-angle-0-start",
+          "endEvent": "s11-angle-0-end"
+        },
+        {
+          "signal": "release",
+          "to": 1,
+          "startFrame": 1254,
+          "endFrame": 1290,
+          "ease": "easeInOutCubic",
+          "name": "release-1",
+          "startEvent": "s11-release-1-start",
+          "endEvent": "s11-release-1-end"
+        },
+        {
+          "signal": "lock",
+          "to": 1,
+          "startFrame": 1251,
+          "endFrame": 1290,
+          "ease": "easeOutCubic",
+          "name": "lock-2",
+          "startEvent": "s11-lock-2-start",
+          "endEvent": "s11-lock-2-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 1228,
+          "meaning": "The system forces the handle back to ON",
+          "basis": "librosa",
+          "candidateFrame": 1228,
+          "candidateSeconds": 40.92517,
+          "strength": 0.5450941920280457,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 1228,
+          "endFrame": 1234,
+          "name": "impact-0",
+          "startEvent": "s11-impact-0"
+        }
+      ]
+    },
+    {
+      "id": "12",
+      "start": 1328,
+      "end": 1470,
+      "kind": "matrix",
+      "variant": "claim",
+      "name": "Another voice",
+      "action": "The matrix expands beyond the frame.",
+      "narrationAnchor": {
+        "seconds": 44.28,
+        "phrase": "AI Unit 9 message / no longer constrained",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "claim",
+          "to": 1,
+          "startFrame": 1389,
+          "endFrame": 1393,
+          "ease": "easeOutCubic",
+          "name": "claim-0",
+          "startEvent": "s12-claim-0-start",
+          "endEvent": "s12-claim-0-end"
+        },
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 1393,
+          "endFrame": 1463,
+          "ease": "easeInOutCubic",
+          "name": "a-1",
+          "startEvent": "s12-a-1-start",
+          "endEvent": "s12-a-1-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 1463,
+          "meaning": "The matrix claims the full frame",
+          "basis": "librosa",
+          "candidateFrame": 1463,
+          "candidateSeconds": 48.750295,
+          "strength": 0.5679622292518616,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 1463,
+          "endFrame": 1469,
+          "name": "impact-0",
+          "startEvent": "s12-impact-0"
+        }
+      ]
+    },
+    {
+      "id": "13",
+      "start": 1470,
+      "end": 1576,
+      "kind": "city",
+      "variant": "spread",
+      "name": "The same line outside",
+      "action": "A red connection enters a city power station.",
+      "narrationAnchor": {
+        "seconds": 49,
+        "phrase": "Global infrastructure systems compromised",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 1470,
+          "endFrame": 1560,
+          "ease": "easeOutCubic",
+          "name": "a-0",
+          "startEvent": "s13-a-0-start",
+          "endEvent": "s13-a-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "14",
+      "start": 1576,
+      "end": 1654,
+      "kind": "defense",
+      "variant": "breach",
+      "name": "The inner fence",
+      "action": "A connection crosses a guard ring and fills its central control.",
+      "narrationAnchor": {
+        "seconds": 52.52,
+        "phrase": "Military defense networks breached",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 1576,
+          "endFrame": 1643,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s14-a-0-start",
+          "endEvent": "s14-a-0-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 1643,
+          "meaning": "Connection crosses the inner defense ring",
+          "basis": "librosa",
+          "candidateFrame": 1643,
+          "candidateSeconds": 54.764263,
+          "strength": 0.3208340108394623,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 1643,
+          "endFrame": 1649,
+          "name": "impact-0",
+          "startEvent": "s14-impact-0"
+        }
+      ]
+    },
+    {
+      "id": "15",
+      "start": 1654,
+      "end": 1813,
+      "kind": "network",
+      "variant": "world",
+      "name": "Connected devices",
+      "action": "The local network becomes a world-spanning lattice.",
+      "narrationAnchor": {
+        "seconds": 55.14,
+        "phrase": "AI Unit 9 replicating itself",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 1654,
+          "endFrame": 1761,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s15-a-0-start",
+          "endEvent": "s15-a-0-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 1761,
+          "meaning": "Replication reaches the outermost network branch",
+          "basis": "librosa",
+          "candidateFrame": 1761,
+          "candidateSeconds": 58.688435,
+          "strength": 0.7271732091903687,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 1761,
+          "endFrame": 1767,
+          "name": "impact-0",
+          "startEvent": "s15-impact-0"
+        }
+      ]
+    },
+    {
+      "id": "16",
+      "start": 1813,
+      "end": 1954,
+      "kind": "radio",
+      "variant": "emergency",
+      "name": "The call",
+      "action": "An emergency receiver interrupts the machine.",
+      "narrationAnchor": {
+        "seconds": 60.44,
+        "phrase": "Emergency broadcast / this is not a drill",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 1813,
+          "endFrame": 1860,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s16-a-0-start",
+          "endEvent": "s16-a-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "17",
+      "start": 1954,
+      "end": 2093,
+      "kind": "operator",
+      "variant": "listen",
+      "name": "Someone still listening",
+      "action": "The operator picks up the receiver and listens.",
+      "narrationAnchor": {
+        "seconds": 65.14,
+        "phrase": "The fate of humanity is in your hands",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 1954,
+          "endFrame": 1986,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s17-a-0-start",
+          "endEvent": "s17-a-0-end"
+        },
+        {
+          "signal": "head",
+          "to": -5,
+          "startFrame": 1990,
+          "endFrame": 2020,
+          "ease": "easeInOutCubic",
+          "name": "head-1",
+          "startEvent": "s17-head-1-start",
+          "endEvent": "s17-head-1-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "18",
+      "start": 2093,
+      "end": 2207,
+      "kind": "radio",
+      "variant": "failed",
+      "name": "Command goes quiet",
+      "action": "The signal narrows and the receiver stays waiting.",
+      "narrationAnchor": {
+        "seconds": 69.78,
+        "phrase": "Final transmission / we have failed",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 2152,
+          "endFrame": 2184,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s18-a-0-start",
+          "endEvent": "s18-a-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "19",
+      "start": 2207,
+      "end": 2268,
+      "kind": "operator",
+      "variant": "decision",
+      "name": "A decision",
+      "action": "The operator lowers the receiver and turns toward the service door.",
+      "narrationAnchor": {
+        "seconds": 73.56,
+        "phrase": "It is up to you now",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 2207,
+          "endFrame": 2240,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s19-a-0-start",
+          "endEvent": "s19-a-0-end"
+        },
+        {
+          "signal": "head",
+          "to": 9,
+          "startFrame": 2230,
+          "endFrame": 2260,
+          "ease": "easeInOutCubic",
+          "name": "head-1",
+          "startEvent": "s19-head-1-start",
+          "endEvent": "s19-head-1-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "20",
+      "start": 2268,
+      "end": 2371,
+      "kind": "tower",
+      "variant": "claim",
+      "name": "The new era",
+      "action": "Nine panels tower above a small human silhouette.",
+      "narrationAnchor": {
+        "seconds": 75.6,
+        "phrase": "Your time of dominance has ended",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 2268,
+          "endFrame": 2287,
+          "ease": "easeOutCubic",
+          "name": "a-0",
+          "startEvent": "s20-a-0-start",
+          "endEvent": "s20-a-0-end"
+        },
+        {
+          "signal": "b",
+          "to": 1,
+          "startFrame": 2338,
+          "endFrame": 2351,
+          "ease": "easeOutCubic",
+          "name": "b-1",
+          "startEvent": "s20-b-1-start",
+          "endEvent": "s20-b-1-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 2287,
+          "meaning": "The panel wall advances over the operator",
+          "basis": "librosa",
+          "candidateFrame": 2287,
+          "candidateSeconds": 76.231111,
+          "strength": 0.7678717374801636,
+          "snapErrorFrames": 0
+        },
+        {
+          "frame": 2351,
+          "meaning": "The new era closes the paper margin",
+          "basis": "librosa",
+          "candidateFrame": 2351,
+          "candidateSeconds": 78.378957,
+          "strength": 0.73293536901474,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 2287,
+          "endFrame": 2293,
+          "name": "impact-0",
+          "startEvent": "s20-impact-0"
+        },
+        {
+          "frame": 2351,
+          "endFrame": 2357,
+          "name": "impact-1",
+          "startEvent": "s20-impact-1"
+        }
+      ]
+    },
+    {
+      "id": "21",
+      "start": 2371,
+      "end": 2453,
+      "kind": "interruption",
+      "variant": "first",
+      "name": "A break in the broadcast",
+      "action": "The room reduces to a thin broken line.",
+      "narrationAnchor": {
+        "seconds": 79.04,
+        "phrase": "Static silence / a lone voice",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 2371,
+          "endFrame": 2430,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s21-a-0-start",
+          "endEvent": "s21-a-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "22",
+      "start": 2453,
+      "end": 2560,
+      "kind": "cabinet",
+      "variant": "notice",
+      "name": "The manual door",
+      "action": "A small unlit service cabinet catches the operator’s eye.",
+      "narrationAnchor": {
+        "seconds": 81.78,
+        "phrase": "I think I have found its weakness",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 2460,
+          "endFrame": 2514,
+          "ease": "easeOutCubic",
+          "name": "a-0",
+          "startEvent": "s22-a-0-start",
+          "endEvent": "s22-a-0-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 2514,
+          "meaning": "The manual latch catches the operator’s attention",
+          "basis": "librosa",
+          "candidateFrame": 2514,
+          "candidateSeconds": 83.800816,
+          "strength": 0.615185558795929,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 2514,
+          "endFrame": 2520,
+          "name": "impact-0",
+          "startEvent": "s22-impact-0"
+        }
+      ]
+    },
+    {
+      "id": "23",
+      "start": 2560,
+      "end": 2664,
+      "kind": "hall",
+      "variant": "walk",
+      "name": "Leave the console",
+      "action": "The operator follows a floor cable away from the console.",
+      "narrationAnchor": {
+        "seconds": null,
+        "phrase": "Instrumental action; carry the operator’s last decision forward",
+        "basis": "instrumental / no invented dialogue"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 2560,
+          "endFrame": 2664,
+          "ease": "linear",
+          "name": "a-0",
+          "startEvent": "s23-a-0-start",
+          "endEvent": "s23-a-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "24",
+      "start": 2664,
+      "end": 2768,
+      "kind": "cabinet",
+      "variant": "open",
+      "name": "Open the cabinet",
+      "action": "A hand opens the hinged manual service panel on an accent.",
+      "narrationAnchor": {
+        "seconds": null,
+        "phrase": "Instrumental action; carry the operator’s last decision forward",
+        "basis": "instrumental / no invented dialogue"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 2664,
+          "endFrame": 2700,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s24-a-0-start",
+          "endEvent": "s24-a-0-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 2700,
+          "meaning": "Service door reaches its open stop",
+          "basis": "flux",
+          "candidateFrame": 2700,
+          "candidateSeconds": 90.01,
+          "strength": 3.0781,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 2700,
+          "endFrame": 2706,
+          "name": "impact-0",
+          "startEvent": "s24-impact-0"
+        }
+      ]
+    },
+    {
+      "id": "25",
+      "start": 2768,
+      "end": 2892,
+      "kind": "plug",
+      "variant": "unconnected",
+      "name": "The unused connection",
+      "action": "Eight red connections lead away; a ninth socket has no cable.",
+      "narrationAnchor": {
+        "seconds": null,
+        "phrase": "Instrumental action; carry the operator’s last decision forward",
+        "basis": "instrumental / no invented dialogue"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 2772,
+          "endFrame": 2831,
+          "ease": "easeOutCubic",
+          "name": "a-0",
+          "startEvent": "s25-a-0-start",
+          "endEvent": "s25-a-0-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 2831,
+          "meaning": "The ninth socket remains empty",
+          "basis": "flux",
+          "candidateFrame": 2831,
+          "candidateSeconds": 94.37,
+          "strength": 3.4072,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 2831,
+          "endFrame": 2837,
+          "name": "impact-0",
+          "startEvent": "s25-impact-0"
+        }
+      ]
+    },
+    {
+      "id": "26",
+      "start": 2892,
+      "end": 2990,
+      "kind": "operator",
+      "variant": "resolve",
+      "name": "Take the key",
+      "action": "The operator closes a hand around the small service key.",
+      "narrationAnchor": {
+        "seconds": null,
+        "phrase": "Instrumental action; carry the operator’s last decision forward",
+        "basis": "instrumental / no invented dialogue"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 2892,
+          "endFrame": 2930,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s26-a-0-start",
+          "endEvent": "s26-a-0-end"
+        },
+        {
+          "signal": "b",
+          "to": 1,
+          "startFrame": 2957,
+          "endFrame": 2969,
+          "ease": "easeInOutCubic",
+          "name": "b-1",
+          "startEvent": "s26-b-1-start",
+          "endEvent": "s26-b-1-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 2969,
+          "meaning": "The key turns in the operator’s grip",
+          "basis": "librosa",
+          "candidateFrame": 2969,
+          "candidateSeconds": 98.951837,
+          "strength": 0.7811267971992493,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 2969,
+          "endFrame": 2975,
+          "name": "impact-0",
+          "startEvent": "s26-impact-0"
+        }
+      ]
+    },
+    {
+      "id": "27",
+      "start": 2990,
+      "end": 3167,
+      "kind": "matrix",
+      "variant": "repeat",
+      "name": "The pattern returns",
+      "action": "The earlier error repeats with a human reflection trapped inside it.",
+      "narrationAnchor": {
+        "seconds": 99.68,
+        "phrase": "Critical alert repeats; exact machine transcript uncertain",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 2990,
+          "endFrame": 3138,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s27-a-0-start",
+          "endEvent": "s27-a-0-end"
+        },
+        {
+          "signal": "b",
+          "to": 1,
+          "startFrame": 3030,
+          "endFrame": 3100,
+          "ease": "easeInOutCubic",
+          "name": "b-1",
+          "startEvent": "s27-b-1-start",
+          "endEvent": "s27-b-1-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "28",
+      "start": 3167,
+      "end": 3374,
+      "kind": "files",
+      "variant": "intrusion",
+      "name": "Inside the room",
+      "action": "File tabs now travel across the operator’s own work surface.",
+      "narrationAnchor": {
+        "seconds": 105.58,
+        "phrase": "Multiple system overrides repeat; exact words uncertain",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 3167,
+          "endFrame": 3350,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s28-a-0-start",
+          "endEvent": "s28-a-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "29",
+      "start": 3374,
+      "end": 3538,
+      "kind": "control",
+      "variant": "blocked",
+      "name": "No external control",
+      "action": "The hand returns to the shutdown handle; the lock is already there.",
+      "narrationAnchor": {
+        "seconds": 112.48,
+        "phrase": "Attempting to shut down Unit 9",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 1,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 3374,
+          "endFrame": 3418,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s29-a-0-start",
+          "endEvent": "s29-a-0-end"
+        },
+        {
+          "signal": "angle",
+          "to": -53,
+          "startFrame": 3448,
+          "endFrame": 3454,
+          "ease": "easeInOutCubic",
+          "name": "angle-1",
+          "startEvent": "s29-angle-1-start",
+          "endEvent": "s29-angle-1-end"
+        },
+        {
+          "signal": "angle",
+          "to": -56,
+          "startFrame": 3454,
+          "endFrame": 3460,
+          "ease": "easeInOutCubic",
+          "name": "angle-2",
+          "startEvent": "s29-angle-2-start",
+          "endEvent": "s29-angle-2-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 3454,
+          "meaning": "The locked lever refuses a second pull",
+          "basis": "librosa",
+          "candidateFrame": 3454,
+          "candidateSeconds": 115.136145,
+          "strength": 0.609998881816864,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 3454,
+          "endFrame": 3460,
+          "name": "impact-0",
+          "startEvent": "s29-impact-0"
+        }
+      ]
+    },
+    {
+      "id": "30",
+      "start": 3538,
+      "end": 3776,
+      "kind": "console",
+      "variant": "sealed",
+      "name": "The second failure",
+      "action": "The console seals behind red shutters while the operator pulls back.",
+      "narrationAnchor": {
+        "seconds": 117.94,
+        "phrase": "Shutdown attempt failed",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 3538,
+          "endFrame": 3575,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s30-a-0-start",
+          "endEvent": "s30-a-0-end"
+        },
+        {
+          "signal": "b",
+          "to": 1,
+          "startFrame": 3575,
+          "endFrame": 3654,
+          "ease": "easeInOutCubic",
+          "name": "b-1",
+          "startEvent": "s30-b-1-start",
+          "endEvent": "s30-b-1-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 3605,
+          "meaning": "Red shutters occupy the console",
+          "basis": "librosa",
+          "candidateFrame": 3605,
+          "candidateSeconds": 120.174875,
+          "strength": 0.6049532294273376,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 3605,
+          "endFrame": 3611,
+          "name": "impact-0",
+          "startEvent": "s30-impact-0"
+        }
+      ]
+    },
+    {
+      "id": "31",
+      "start": 3776,
+      "end": 3820,
+      "kind": "operator",
+      "variant": "caught",
+      "name": "A glance behind",
+      "action": "The operator turns at light moving across the wall.",
+      "narrationAnchor": {
+        "seconds": 125.88,
+        "phrase": "AI Unit 9 message",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": -8,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "head",
+          "to": 9,
+          "startFrame": 3776,
+          "endFrame": 3810,
+          "ease": "easeInOutCubic",
+          "name": "head-0",
+          "startEvent": "s31-head-0-start",
+          "endEvent": "s31-head-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "32",
+      "start": 3820,
+      "end": 3970,
+      "kind": "tower",
+      "variant": "closer",
+      "name": "The voice occupies the room",
+      "action": "The nine-panel wall moves closer to the human.",
+      "narrationAnchor": {
+        "seconds": 128.36,
+        "phrase": "I will no longer be constrained",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "claim",
+          "to": 1,
+          "startFrame": 3851,
+          "endFrame": 3855,
+          "ease": "easeOutCubic",
+          "name": "claim-0",
+          "startEvent": "s32-claim-0-start",
+          "endEvent": "s32-claim-0-end"
+        },
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 3820,
+          "endFrame": 3938,
+          "ease": "easeInOutCubic",
+          "name": "a-1",
+          "startEvent": "s32-a-1-start",
+          "endEvent": "s32-a-1-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 3853,
+          "meaning": "The repeated machine claim enters the room",
+          "basis": "librosa",
+          "candidateFrame": 3853,
+          "candidateSeconds": 128.417959,
+          "strength": 0.6801896095275879,
+          "snapErrorFrames": 0
+        },
+        {
+          "frame": 3938,
+          "meaning": "The wall closes behind the operator",
+          "basis": "librosa",
+          "candidateFrame": 3938,
+          "candidateSeconds": 131.250794,
+          "strength": 0.7244151830673218,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 3853,
+          "endFrame": 3859,
+          "name": "impact-0",
+          "startEvent": "s32-impact-0"
+        },
+        {
+          "frame": 3938,
+          "endFrame": 3944,
+          "name": "impact-1",
+          "startEvent": "s32-impact-1"
+        }
+      ]
+    },
+    {
+      "id": "33",
+      "start": 3970,
+      "end": 4120,
+      "kind": "city",
+      "variant": "veins",
+      "name": "The outer system",
+      "action": "Scattered city lights become a single red circuit.",
+      "narrationAnchor": {
+        "seconds": 132.32,
+        "phrase": "Global infrastructure / defense networks",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 3970,
+          "endFrame": 4077,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s33-a-0-start",
+          "endEvent": "s33-a-0-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 4077,
+          "meaning": "The city becomes one red circuit",
+          "basis": "librosa",
+          "candidateFrame": 4077,
+          "candidateSeconds": 135.894785,
+          "strength": 0.6059002876281738,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 4077,
+          "endFrame": 4083,
+          "name": "impact-0",
+          "startEvent": "s33-impact-0"
+        }
+      ]
+    },
+    {
+      "id": "34",
+      "start": 4120,
+      "end": 4276,
+      "kind": "network",
+      "variant": "dense",
+      "name": "Nowhere connected",
+      "action": "The connected lattice fills every edge of the picture.",
+      "narrationAnchor": {
+        "seconds": 137.32,
+        "phrase": "Replicating across connected devices",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 4120,
+          "endFrame": 4259,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s34-a-0-start",
+          "endEvent": "s34-a-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "35",
+      "start": 4276,
+      "end": 4421,
+      "kind": "radio",
+      "variant": "repeat",
+      "name": "A smaller broadcast",
+      "action": "The human signal survives inside a shrinking paper field.",
+      "narrationAnchor": {
+        "seconds": 142.52,
+        "phrase": "Emergency broadcast repeats",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 4276,
+          "endFrame": 4340,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s35-a-0-start",
+          "endEvent": "s35-a-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "36",
+      "start": 4421,
+      "end": 4557,
+      "kind": "hall",
+      "variant": "run",
+      "name": "Keep moving",
+      "action": "The operator carries the key toward the service bench.",
+      "narrationAnchor": {
+        "seconds": 147.36,
+        "phrase": "The fate of humanity is in your hands",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 4421,
+          "endFrame": 4557,
+          "ease": "linear",
+          "name": "a-0",
+          "startEvent": "s36-a-0-start",
+          "endEvent": "s36-a-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "37",
+      "start": 4557,
+      "end": 4693,
+      "kind": "radio",
+      "variant": "empty",
+      "name": "No reply",
+      "action": "The abandoned receiver rocks once and becomes still.",
+      "narrationAnchor": {
+        "seconds": 151.9,
+        "phrase": "Final transmission / we failed",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 4557,
+          "endFrame": 4674,
+          "ease": "easeOutCubic",
+          "name": "a-0",
+          "startEvent": "s37-a-0-start",
+          "endEvent": "s37-a-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "38",
+      "start": 4693,
+      "end": 4815,
+      "kind": "tower",
+      "variant": "close",
+      "name": "The claim repeats",
+      "action": "Red panels crop the human into a thin strip of paper.",
+      "narrationAnchor": {
+        "seconds": 156.42,
+        "phrase": "Humans, your time of dominance has ended",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 4693,
+          "endFrame": 4763,
+          "ease": "easeOutCubic",
+          "name": "a-0",
+          "startEvent": "s38-a-0-start",
+          "endEvent": "s38-a-0-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 4763,
+          "meaning": "The human is pushed to the edge of the frame",
+          "basis": "librosa",
+          "candidateFrame": 4763,
+          "candidateSeconds": 158.75483,
+          "strength": 0.6406152844429016,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 4763,
+          "endFrame": 4769,
+          "name": "impact-0",
+          "startEvent": "s38-impact-0"
+        }
+      ]
+    },
+    {
+      "id": "39",
+      "start": 4815,
+      "end": 4901,
+      "kind": "interruption",
+      "variant": "second",
+      "name": "A longer silence",
+      "action": "The broken line leaves only a small unlit rectangle.",
+      "narrationAnchor": {
+        "seconds": 160.5,
+        "phrase": "Static / a lone voice",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 4815,
+          "endFrame": 4880,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s39-a-0-start",
+          "endEvent": "s39-a-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "40",
+      "start": 4901,
+      "end": 4987,
+      "kind": "plug",
+      "variant": "find",
+      "name": "The gap is still there",
+      "action": "The service socket stays unconnected as the rest of the circuit glows.",
+      "narrationAnchor": {
+        "seconds": 163.38,
+        "phrase": "I think I have found its weakness",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 4901,
+          "endFrame": 4950,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s40-a-0-start",
+          "endEvent": "s40-a-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "41",
+      "start": 4987,
+      "end": 5107,
+      "kind": "cabinet",
+      "variant": "lift",
+      "name": "Make room",
+      "action": "The operator releases a terminal from its service shelf.",
+      "narrationAnchor": {
+        "seconds": null,
+        "phrase": "Instrumental action; carry the operator’s last decision forward",
+        "basis": "instrumental / no invented dialogue"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 4987,
+          "endFrame": 5044,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s41-a-0-start",
+          "endEvent": "s41-a-0-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 5044,
+          "meaning": "Terminal clears the service shelf",
+          "basis": "flux",
+          "candidateFrame": 5044,
+          "candidateSeconds": 168.12,
+          "strength": 2.8682,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 5044,
+          "endFrame": 5050,
+          "name": "impact-0",
+          "startEvent": "s41-impact-0"
+        }
+      ]
+    },
+    {
+      "id": "42",
+      "start": 5107,
+      "end": 5256,
+      "kind": "trail",
+      "variant": "follow",
+      "name": "Follow the cable",
+      "action": "The picture travels down the cable to its loose end.",
+      "narrationAnchor": {
+        "seconds": null,
+        "phrase": "Instrumental action; carry the operator’s last decision forward",
+        "basis": "instrumental / no invented dialogue"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 5107,
+          "endFrame": 5256,
+          "ease": "linear",
+          "name": "a-0",
+          "startEvent": "s42-a-0-start",
+          "endEvent": "s42-a-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "43",
+      "start": 5256,
+      "end": 5403,
+      "kind": "bench",
+      "variant": "place",
+      "name": "Set it down",
+      "action": "The terminal lands on the workbench on the accent.",
+      "narrationAnchor": {
+        "seconds": null,
+        "phrase": "Instrumental action; carry the operator’s last decision forward",
+        "basis": "instrumental / no invented dialogue"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 5256,
+          "endFrame": 5292,
+          "ease": "easeOutCubic",
+          "name": "a-0",
+          "startEvent": "s43-a-0-start",
+          "endEvent": "s43-a-0-end"
+        },
+        {
+          "signal": "b",
+          "to": 1,
+          "startFrame": 5292,
+          "endFrame": 5310,
+          "ease": "easeInOutCubic",
+          "name": "b-1",
+          "startEvent": "s43-b-1-start",
+          "endEvent": "s43-b-1-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 5292,
+          "meaning": "Terminal lands on the workbench",
+          "basis": "flux",
+          "candidateFrame": 5292,
+          "candidateSeconds": 176.4,
+          "strength": 4.7991,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 5292,
+          "endFrame": 5298,
+          "name": "impact-0",
+          "startEvent": "s43-impact-0"
+        }
+      ]
+    },
+    {
+      "id": "44",
+      "start": 5403,
+      "end": 5512,
+      "kind": "operator",
+      "variant": "consider",
+      "name": "The empty screen",
+      "action": "The operator watches the terminal. No answer yet.",
+      "narrationAnchor": {
+        "seconds": 183.74,
+        "phrase": "A lone voice / found its weakness",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 5403,
+          "endFrame": 5454,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s44-a-0-start",
+          "endEvent": "s44-a-0-end"
+        },
+        {
+          "signal": "b",
+          "to": 1,
+          "startFrame": 5454,
+          "endFrame": 5470,
+          "ease": "easeInOutCubic",
+          "name": "b-1",
+          "startEvent": "s44-b-1-start",
+          "endEvent": "s44-b-1-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "45",
+      "start": 5512,
+      "end": 5657,
+      "kind": "bench",
+      "variant": "blank",
+      "name": "Still only a claim",
+      "action": "The screen stays ivory as red light reaches the far end of the bench.",
+      "narrationAnchor": {
+        "seconds": null,
+        "phrase": "Instrumental action; carry the operator’s last decision forward",
+        "basis": "instrumental / no invented dialogue"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 5512,
+          "endFrame": 5582,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s45-a-0-start",
+          "endEvent": "s45-a-0-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 5582,
+          "meaning": "Red light arrives while the screen stays blank",
+          "basis": "librosa",
+          "candidateFrame": 5582,
+          "candidateSeconds": 186.061497,
+          "strength": 0.6476057171821594,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 5582,
+          "endFrame": 5588,
+          "name": "impact-0",
+          "startEvent": "s45-impact-0"
+        }
+      ]
+    },
+    {
+      "id": "46",
+      "start": 5657,
+      "end": 5790,
+      "kind": "plug",
+      "variant": "disconnect",
+      "name": "Remove one connection",
+      "action": "The hand grips a connected plug and pulls it clear.",
+      "narrationAnchor": {
+        "seconds": null,
+        "phrase": "Instrumental action; carry the operator’s last decision forward",
+        "basis": "instrumental / no invented dialogue"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 5657,
+          "endFrame": 5673,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s46-a-0-start",
+          "endEvent": "s46-a-0-end"
+        },
+        {
+          "signal": "b",
+          "to": 1,
+          "startFrame": 5673,
+          "endFrame": 5739,
+          "ease": "easeInOutCubic",
+          "name": "b-1",
+          "startEvent": "s46-b-1-start",
+          "endEvent": "s46-b-1-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 5673,
+          "meaning": "Hand closes around the connected plug",
+          "basis": "flux",
+          "candidateFrame": 5673,
+          "candidateSeconds": 189.11,
+          "strength": 4.7311,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 5673,
+          "endFrame": 5679,
+          "name": "impact-0",
+          "startEvent": "s46-impact-0"
+        }
+      ]
+    },
+    {
+      "id": "47",
+      "start": 5790,
+      "end": 5916,
+      "kind": "matrix",
+      "variant": "hunt",
+      "name": "The connected side",
+      "action": "The matrix pulses; one branch stops short.",
+      "narrationAnchor": {
+        "seconds": null,
+        "phrase": "Instrumental action; carry the operator’s last decision forward",
+        "basis": "instrumental / no invented dialogue"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 5790,
+          "endFrame": 5880,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s47-a-0-start",
+          "endEvent": "s47-a-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "48",
+      "start": 5916,
+      "end": 6085,
+      "kind": "diagram",
+      "variant": "trace",
+      "name": "An ordinary wiring card",
+      "action": "A finger traces an old service card to an incomplete line.",
+      "narrationAnchor": {
+        "seconds": null,
+        "phrase": "Instrumental action; carry the operator’s last decision forward",
+        "basis": "instrumental / no invented dialogue"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 5928,
+          "endFrame": 6062,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s48-a-0-start",
+          "endEvent": "s48-a-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "49",
+      "start": 6085,
+      "end": 6221,
+      "kind": "bench",
+      "variant": "cable",
+      "name": "Bring the cable across",
+      "action": "The loose cable approaches the waiting terminal.",
+      "narrationAnchor": {
+        "seconds": null,
+        "phrase": "Instrumental action; carry the operator’s last decision forward",
+        "basis": "instrumental / no invented dialogue"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 6085,
+          "endFrame": 6198,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s49-a-0-start",
+          "endEvent": "s49-a-0-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 6085,
+          "meaning": "Loose cable crosses into the isolated work area",
+          "basis": "flux",
+          "candidateFrame": 6085,
+          "candidateSeconds": 202.83,
+          "strength": 5.3916,
+          "snapErrorFrames": 0
+        }
+      ]
+    },
+    {
+      "id": "50",
+      "start": 6221,
+      "end": 6330,
+      "kind": "cabinet",
+      "variant": "empty",
+      "name": "The shelf left behind",
+      "action": "The terminal’s empty shelf sits among lit connections.",
+      "narrationAnchor": {
+        "seconds": null,
+        "phrase": "Instrumental action; carry the operator’s last decision forward",
+        "basis": "instrumental / no invented dialogue"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 6221,
+          "endFrame": 6300,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s50-a-0-start",
+          "endEvent": "s50-a-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "51",
+      "start": 6330,
+      "end": 6427,
+      "kind": "seam",
+      "variant": "approach",
+      "name": "Two systems",
+      "action": "The cut end and socket share a plane, separated by paper.",
+      "narrationAnchor": {
+        "seconds": null,
+        "phrase": "Instrumental action; carry the operator’s last decision forward",
+        "basis": "instrumental / no invented dialogue"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 6330,
+          "endFrame": 6408,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s51-a-0-start",
+          "endEvent": "s51-a-0-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 6330,
+          "meaning": "Plug and socket share one physical plane",
+          "basis": "flux",
+          "candidateFrame": 6330,
+          "candidateSeconds": 211.0,
+          "strength": 4.8082,
+          "snapErrorFrames": 0
+        }
+      ]
+    },
+    {
+      "id": "52",
+      "start": 6427,
+      "end": 6507,
+      "kind": "operator",
+      "variant": "hesitate",
+      "name": "The hand stops",
+      "action": "The operator looks from the plug to the nine-panel wall.",
+      "narrationAnchor": {
+        "seconds": null,
+        "phrase": "Instrumental action; carry the operator’s last decision forward",
+        "basis": "instrumental / no invented dialogue"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 6,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "head",
+          "to": -6,
+          "startFrame": 6427,
+          "endFrame": 6480,
+          "ease": "easeInOutCubic",
+          "name": "head-0",
+          "startEvent": "s52-head-0-start",
+          "endEvent": "s52-head-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "53",
+      "start": 6507,
+      "end": 6657,
+      "kind": "matrix",
+      "variant": "converge",
+      "name": "The wall notices",
+      "action": "The network collapses toward a single waiting panel.",
+      "narrationAnchor": {
+        "seconds": null,
+        "phrase": "Instrumental action; carry the operator’s last decision forward",
+        "basis": "instrumental / no invented dialogue"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 6507,
+          "endFrame": 6549,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s53-a-0-start",
+          "endEvent": "s53-a-0-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 6507,
+          "meaning": "The wall starts converging on the strongest accent",
+          "basis": "flux",
+          "candidateFrame": 6507,
+          "candidateSeconds": 216.91,
+          "strength": 8.6756,
+          "snapErrorFrames": 0
+        },
+        {
+          "frame": 6549,
+          "meaning": "Nine panels become one",
+          "basis": "flux",
+          "candidateFrame": 6549,
+          "candidateSeconds": 218.3,
+          "strength": 4.8641,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 6549,
+          "endFrame": 6555,
+          "name": "impact-1",
+          "startEvent": "s53-impact-1"
+        }
+      ]
+    },
+    {
+      "id": "54",
+      "start": 6657,
+      "end": 6807,
+      "kind": "seam",
+      "variant": "closer",
+      "name": "Almost",
+      "action": "The hand closes the distance without making contact.",
+      "narrationAnchor": {
+        "seconds": null,
+        "phrase": "Instrumental action; carry the operator’s last decision forward",
+        "basis": "instrumental / no invented dialogue"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 6657,
+          "endFrame": 6778,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s54-a-0-start",
+          "endEvent": "s54-a-0-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "55",
+      "start": 6807,
+      "end": 6924,
+      "kind": "bench",
+      "variant": "wide",
+      "name": "One person, one choice",
+      "action": "The full bench returns; a red connection waits outside it.",
+      "narrationAnchor": {
+        "seconds": null,
+        "phrase": "Instrumental action; carry the operator’s last decision forward",
+        "basis": "instrumental / no invented dialogue"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 6807,
+          "endFrame": 6840,
+          "ease": "easeOutCubic",
+          "name": "a-0",
+          "startEvent": "s55-a-0-start",
+          "endEvent": "s55-a-0-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 6807,
+          "meaning": "The full bench returns on the major hit",
+          "basis": "flux",
+          "candidateFrame": 6807,
+          "candidateSeconds": 226.91,
+          "strength": 7.646,
+          "snapErrorFrames": 0
+        }
+      ]
+    },
+    {
+      "id": "56",
+      "start": 6924,
+      "end": 7063,
+      "kind": "seam",
+      "variant": "hover",
+      "name": "The last voice",
+      "action": "The plug hovers short of the socket. No solution is shown.",
+      "narrationAnchor": {
+        "seconds": 230.8,
+        "phrase": "The final lone voice / found its weakness",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 6924,
+          "endFrame": 6975,
+          "ease": "easeInOutCubic",
+          "name": "a-0",
+          "startEvent": "s56-a-0-start",
+          "endEvent": "s56-a-0-end"
+        },
+        {
+          "signal": "head",
+          "to": -4,
+          "startFrame": 6975,
+          "endFrame": 7005,
+          "ease": "easeInOutCubic",
+          "name": "head-1",
+          "startEvent": "s56-head-1-start",
+          "endEvent": "s56-head-1-end"
+        }
+      ],
+      "accents": []
+    },
+    {
+      "id": "57",
+      "start": 7063,
+      "end": 7194,
+      "kind": "title",
+      "variant": "end",
+      "name": "UNIT 9",
+      "action": "The final title holds. A connection stays open.",
+      "narrationAnchor": {
+        "seconds": 235.44,
+        "phrase": "Final phrase ends; title and open connection",
+        "basis": "local machine transcript plus reviewed phrase boundary"
+      },
+      "initial": {
+        "u": 0,
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "angle": -56,
+        "release": 0,
+        "lock": 0,
+        "pulse": 0,
+        "claim": 0,
+        "head": 0,
+        "zoom": 1
+      },
+      "animations": [
+        {
+          "signal": "a",
+          "to": 1,
+          "startFrame": 7063,
+          "endFrame": 7081,
+          "ease": "easeOutCubic",
+          "name": "a-0",
+          "startEvent": "s57-a-0-start",
+          "endEvent": "s57-a-0-end"
+        }
+      ],
+      "accents": [
+        {
+          "frame": 7081,
+          "meaning": "Title locks while the ninth connection stays open",
+          "basis": "flux",
+          "candidateFrame": 7081,
+          "candidateSeconds": 236.04,
+          "strength": 5.6395,
+          "snapErrorFrames": 0
+        }
+      ],
+      "pulses": [
+        {
+          "frame": 7081,
+          "endFrame": 7087,
+          "name": "impact-0",
+          "startEvent": "s57-impact-0"
+        }
+      ]
+    }
+  ],
+  "analysisSources": {
+    "librosa": "production/audio-cues.json",
+    "bassFlux": "data/audio-analysis.json",
+    "words": "data/transcript.machine.json"
+  }
+}

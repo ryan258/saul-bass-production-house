@@ -1,0 +1,255 @@
+{
+  "root": "unit-9-motion",
+  "edit": "data/edit.json",
+  "audio": "../../../nonsense/unit-9/audio/unit-9.wav",
+  "output": "../../output/unit-9-motion-handled",
+  "delivery": "../../output/unit-9-motion-handled/assembly.mp4",
+  "renderer": "motion-canvas",
+  "handles": 12,
+  "timeline_file": "unit-9-motion-human-edit.otio",
+  "source_globs": [
+    "data/**/*"
+  ],
+  "verification": {
+    "profile": "generic"
+  },
+  "motion_shots": {
+    "01": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 0
+    },
+    "02": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 90
+    },
+    "03": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 168
+    },
+    "04": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 249
+    },
+    "05": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 395
+    },
+    "06": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 613
+    },
+    "07": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 723
+    },
+    "08": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 830
+    },
+    "09": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 1047
+    },
+    "10": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 1110
+    },
+    "11": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 1211
+    },
+    "12": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 1328
+    },
+    "13": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 1470
+    },
+    "14": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 1576
+    },
+    "15": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 1654
+    },
+    "16": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 1813
+    },
+    "17": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 1954
+    },
+    "18": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 2093
+    },
+    "19": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 2207
+    },
+    "20": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 2268
+    },
+    "21": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 2371
+    },
+    "22": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 2453
+    },
+    "23": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 2560
+    },
+    "24": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 2664
+    },
+    "25": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 2768
+    },
+    "26": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 2892
+    },
+    "27": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 2990
+    },
+    "28": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 3167
+    },
+    "29": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 3374
+    },
+    "30": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 3538
+    },
+    "31": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 3776
+    },
+    "32": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 3820
+    },
+    "33": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 3970
+    },
+    "34": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 4120
+    },
+    "35": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 4276
+    },
+    "36": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 4421
+    },
+    "37": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 4557
+    },
+    "38": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 4693
+    },
+    "39": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 4815
+    },
+    "40": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 4901
+    },
+    "41": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 4987
+    },
+    "42": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 5107
+    },
+    "43": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 5256
+    },
+    "44": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 5403
+    },
+    "45": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 5512
+    },
+    "46": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 5657
+    },
+    "47": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 5790
+    },
+    "48": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 5916
+    },
+    "49": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 6085
+    },
+    "50": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 6221
+    },
+    "51": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 6330
+    },
+    "52": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 6427
+    },
+    "53": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 6507
+    },
+    "54": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 6657
+    },
+    "55": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 6807
+    },
+    "56": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 6924
+    },
+    "57": {
+      "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+      "startFrame": 7063
+    }
+  },
+  "motion_registration": {
+    "schemaVersion": 1,
+    "profile": "named-cut-full-film-v1",
+    "project": "../../../nonsense/unit-9/svg-film-v01/motion-canvas/full-film-v01/project.ts",
+    "planSha256": "0135103e578f125f640c0a68b4e54eea75cb90d399d0cd2da1e4339345eb0481",
+    "cuesSha256": "ee1d8d98c68a3ed6c2401e11739650c326cfd9c8c32dd59946c8272e666501c8",
+    "renderSpecSha256": "443fd203f63e04f4ca33e054fb8385e89d868dd0896fd0da65f1d72a6e7f0b12",
+    "sourceAudioSha256": "a58b2139e62d40ef1da179100427ed7b6cd049d0a3292714ffa80d28cddbf78f"
+  }
+}
