@@ -92,6 +92,18 @@ class SharedOutputInputs(unittest.TestCase):
                 self.assert_refused_without_writes(lambda:preview(self.p,0,.2))
                 self.p.driver=self.root/'film.cjs';self.p.config=self.root/'production.json';self.p.data={}
 
+    def test_declared_sources_cannot_be_replaced_by_generated_destinations(self):
+        for declaration in ['source_files','source_globs']:
+            with self.subTest(declaration=declaration):
+                source=self.root/'originals/reference.mp4';source.parent.mkdir(exist_ok=True);source.write_bytes(b'original asset')
+                self.p.data={declaration:['originals/reference.mp4' if declaration=='source_files' else 'originals/**/*']}
+                self.assert_refused_without_writes(lambda:render_picture(self.p,source,0,6))
+
+    def test_explicit_original_inside_output_is_still_protected(self):
+        source=self.output/'proof.mp4';source.write_bytes(b'original supplied asset')
+        self.p.data={'source_files':['production/proof.mp4'],'source_globs':['**/*']}
+        self.assert_refused_without_writes(lambda:preview(self.p,0,.2))
+
     def test_mux_allows_distinct_files_with_the_same_basename(self):
         output=self.output/self.picture.name
         original=(self.picture.read_bytes(),self.p.audio.read_bytes())

@@ -4,7 +4,7 @@ import math,subprocess,shutil,tempfile
 from fractions import Fraction
 import numpy as np
 from .project import binary,dump,sha
-from .media import probe
+from .media import probe,locked_output,_candidate_directory,_promote_files,_protect_output_inputs
 
 def decode_mono(path):
     raw=subprocess.check_output([binary('ffmpeg'),'-v','error','-i',str(path),'-ac','1','-ar','16000','-f','f32le','pipe:1'])
@@ -21,13 +21,49 @@ def _decode_source_window(path,start,duration):
     return np.frombuffer(raw,dtype='<f4')
 
 
+def decode_stereo(path,window=None):
+    command=[binary('ffmpeg'),'-v','error']
+    if window is not None:command+=['-ss',str(float(window[0]))]
+    command+=['-i',str(path)]
+    if window is not None:command+=['-t',str(float(window[1]))]
+    raw=subprocess.check_output(command+['-ac','2','-ar','48000','-f','f32le','pipe:1'])
+    return np.frombuffer(raw,dtype='<f4').reshape(-1,2)
+
+
+def compare_channels(source,delivered):
+    """Stereo destination mix, per-channel content and level; no loudness matching."""
+    n=min(len(source),len(delivered));rows=[]
+    if n<256 or source.shape[1:]!=(2,) or delivered.shape[1:]!=(2,):raise ValueError('Stereo audio is too short or malformed')
+    for index in range(2):
+        a=source[:n,index].astype(np.float64);b=delivered[:n,index].astype(np.float64)
+        if not np.isfinite(a).all() or not np.isfinite(b).all():raise ValueError('Audio contains non-finite samples')
+        level_a=float(np.sqrt(np.mean(a*a)));level_b=float(np.sqrt(np.mean(b*b)))
+        if level_a<1e-7:
+            if float(np.max(np.abs(b)))>1e-6:raise ValueError('Silent audio channel acquired audible signal')
+            rows.append({'channel':index+1,'correlation':None,'rmsRatio':None,'evidence':'Silence only; temporal alignment cannot be measured.'});continue
+        ratio=level_b/level_a
+        if not .98<=ratio<=1.02:raise ValueError(f'Audio channel {index+1} level changed: RMS ratio {ratio:.6f}')
+        a-=a.mean();b-=b.mean();denominator=float(np.sqrt(np.dot(a,a)*np.dot(b,b)))
+        correlation=float(np.dot(a,b)/denominator) if denominator>0 else 0.0
+        if correlation<=.995:raise ValueError(f'Audio channel {index+1} content differs: correlation {correlation:.6f}')
+        rows.append({'channel':index+1,'correlation':correlation,'rmsRatio':ratio})
+    return {'sampleRate':48000,'channels':rows,'maximumRmsRatioError':.02,'minimumCorrelation':.995,
+        'limit':'Compares the explicit stereo downmix at 48 kHz; lossy tolerance, not bit-identical PCM.'}
+
+
+def channel_comparison(source,delivered,window,tolerance):
+    a=decode_stereo(source,window);b=decode_stereo(delivered)
+    if abs(len(b)-len(a))>math.ceil(tolerance*3)+1:raise ValueError('Stereo audio duration/sample count differs from source')
+    return compare_channels(a,b)
+
+
 def audio_comparison(source,delivered,*,source_window=None):
     """Compare all delivered audio against the full source or an explicit window.
 
     Only the source is cropped. Extra delivered audio must remain visible to
     the sample-count check, including when the original has an unused tail.
     """
-    source_sha=sha(source)
+    source_sha=sha(source);delivered_sha=sha(delivered)
     a,b=decode_mono(source),decode_mono(delivered)
     source_samples=len(a);source_window_report=None
     if source_window is not None:
@@ -38,11 +74,11 @@ def audio_comparison(source,delivered,*,source_window=None):
         if count<1:raise ValueError('Source audio window is shorter than one decoded sample')
         if first+count>source_samples:
             raise ValueError('Source audio is shorter than the requested editorial window')
-        a=_decode_source_window(source,start,duration) if start else a[:count]
-        if len(a)!=count:
+        a=_decode_source_window(source,start,duration) if start or (duration*16000).denominator!=1 else a[:count]
+        if abs(len(a)-count)>1:
             raise ValueError('Source audio is shorter than the requested editorial window')
         source_window_report={'startSeconds':float(start),'durationSeconds':float(duration),
-            'startSampleAt16k':first,'samplesAt16k':count}
+            'startSampleAt16k':first,'samplesAt16k':len(a)}
     stream=next((s for s in probe(delivered)['streams'] if s['codec_type']=='audio'),None)
     if stream is None:raise ValueError('Delivery has no audio stream')
     # AAC may expose up to one padded 1024-sample packet after decoding.
@@ -69,17 +105,17 @@ def audio_comparison(source,delivered,*,source_window=None):
         starts=set(int(v) for v in np.linspace(margin,n-window_size-margin,5))
         # A brief signal surrounded by silence still gets an energetic window.
         starts.add(max(margin,min(n-window_size-margin,int(np.argmax(np.abs(x)))-window_size//2)))
-        for start in sorted(starts):
-            window=x[start:start+window_size]
+        for position in sorted(starts):
+            window=x[position:position+window_size]
             energy=float(np.dot(window,window))
             if energy<1e-12:continue
             scores=[]
             for lag in range(-32,33):
-                z=y[start+lag:start+lag+window_size]
+                z=y[position+lag:position+lag+window_size]
                 scores.append(float(np.dot(window,z)/(np.sqrt(energy*np.dot(z,z))+1e-12)))
             # Prefer zero when a periodic waveform yields exactly tied scores.
             lag=max(range(-32,33),key=lambda lag:(scores[lag+32],-abs(lag)))
-            offsets.append({'seconds':start/16000,'estimatedOffsetSamplesAt16k':lag,'correlation':scores[lag+32]})
+            offsets.append({'seconds':position/16000,'estimatedOffsetSamplesAt16k':lag,'correlation':scores[lag+32]})
         if not offsets or any(abs(v['estimatedOffsetSamplesAt16k'])>1 or v['correlation']<=.995 for v in offsets):
             raise ValueError('Audio alignment failed: '+str(offsets))
         evidence='Correlation and duration-relative energetic windows checked at 16 kHz.'
@@ -87,7 +123,11 @@ def audio_comparison(source,delivered,*,source_window=None):
     except OSError as error:
         raise RuntimeError('Source audio changed during comparison') from error
     if not source_unchanged:raise RuntimeError('Source audio changed during comparison')
+    channels=channel_comparison(source,delivered,(start,duration) if source_window is not None else None,tolerance)
+    if sha(source)!=source_sha:raise RuntimeError('Source audio changed during comparison')
+    if sha(delivered)!=delivered_sha:raise RuntimeError('Delivered audio changed during comparison')
     report={'sourceSha256':source_sha,'monoCorrelationAt16k':correlation,'offsetWindows':offsets,'decodedSampleDifferenceAt16k':len(b)-len(a),'allowedSampleDifferenceAt16k':tolerance,'alignmentEvidence':evidence,'note':'AAC is lossy. Correlation does not assert bit-identical PCM; silence cannot establish temporal alignment.'}
+    report['channelComparison']=channels
     if source_window_report is not None:
         report.update({'sourceWindow':source_window_report,'decodedSourceSamplesAt16k':source_samples,
             'comparedSourceSamplesAt16k':len(a),'decodedDeliverySamplesAt16k':len(b)})
@@ -104,11 +144,13 @@ def project_audio_comparison(p,delivered,start=0,frames=None):
     report['sourceWindow'].update({'startFrame':start,'frames':frames,'fps':p.fps})
     return report
 
+@locked_output
 def verify(p, delivery=None, profile=None):
     """Verify a configured delivery; creative checks are explicitly opt-in."""
     from .validation import validate_shot_set
     from .delivery import delivery_path
     from .review import decode_frames,validate_references,compare_reference,contact_sheets
+    _protect_output_inputs(p,[p.output/'media-verification.json',p.output/'review'])
     records=validate_shot_set(p)
     settings=p.data.get('verification',{})
     if not isinstance(settings,dict):raise ValueError('verification must be an object')
@@ -124,6 +166,7 @@ def verify(p, delivery=None, profile=None):
     validate_references(p,references)
     reference_hashes={row['file']:sha(p.root/row['file']) for row in references}
     movie=delivery_path(p,delivery)
+    _protect_output_inputs(p,[p.output/'media-verification.json',p.output/'review'],inputs=[movie,*[p.root/row['file'] for row in references]])
     if not movie.is_file():raise ValueError('Delivery movie is missing: '+str(movie))
     movie_sha=sha(movie);info=probe(movie)
     videos=[s for s in info['streams'] if s['codec_type']=='video']
@@ -145,30 +188,34 @@ def verify(p, delivery=None, profile=None):
     shot_frames=[{'id':s['id'],'name':s['name'],'frame':(s['start']+s['end']-1)//2} for s in p.edit['scenes']]
     selected=sorted({s['frame'] for s in shot_frames}|{r['frame'] for r in references})
     review_folder=p.output/'review'
-    with tempfile.TemporaryDirectory(prefix='delivery-check-',dir=p.output) as folder:
-        folder=Path(folder)
-        decoded=decode_frames(movie,selected,folder)
+    with _candidate_directory(prefix='.delivery-check-',dir=p.output) as folder:
+        folder=Path(folder);staged_review=folder/'review';staged_review.mkdir();decoded_folder=folder/'decoded';decoded_folder.mkdir()
+        decoded=decode_frames(movie,selected,decoded_folder)
         comparisons=[compare_reference(p.root/r['file'],decoded[r['frame']],r['frame']) for r in references]
-        sheets=contact_sheets(p,shot_frames,decoded,folder)
+        sheets=contact_sheets(p,shot_frames,decoded,staged_review)
         if sha(movie)!=movie_sha or p.source_inventory()[0]!=records['sourceFingerprint']:
             raise RuntimeError('Delivery or build sources changed during verification')
         if any(sha(p.root/file)!=digest for file,digest in reference_hashes.items()):
             raise RuntimeError('Reference pictures changed during verification')
-        review_folder.mkdir(parents=True,exist_ok=True)
-        contacts=[]
-        for sheet in sheets:
-            output=review_folder/sheet.name;shutil.copy2(sheet,output);contacts.append(str(p.public_path(output)))
+        contacts=[str(p.public_path(review_folder/sheet.name)) for sheet in sheets]
         for frame in {r['frame'] for r in references}:
-            shutil.copy2(decoded[frame],review_folder/f'frame-{frame:06d}.png')
-    shot_checks=[{'id':s['id'],'frames':records['shots'][s['id']]['frames'],'handleIn':p.handles,'handleOut':p.handles,'hash':'passed'} for s in p.edit['scenes']]
-    report={
+            shutil.copy2(decoded[frame],staged_review/f'frame-{frame:06d}.png')
+        shot_checks=[{'id':s['id'],'frames':records['shots'][s['id']]['frames'],'handleIn':p.handles,'handleOut':p.handles,'hash':'passed'} for s in p.edit['scenes']]
+        report={
         'schemaVersion':2,'status':'passed','scope':'Current shot set, delivery metadata, full video decode, audio comparison, all-shot contact sheets, and explicitly configured reference/profile checks.',
         'delivery':str(p.public_path(movie)),'deliverySha256':movie_sha,'sourceFingerprint':records['sourceFingerprint'],
         'video':{k:video.get(k) for k in ['codec_name','width','height','nb_frames','avg_frame_rate','duration','pix_fmt','color_primaries','color_transfer','color_space','color_range']},
         'audio':audio,'shotChecks':shot_checks,'decodedShotFrames':shot_frames,'contactSheets':contacts,
         'pixelComparisons':comparisons,'referenceHashes':reference_hashes,'profile':selected_profile,'profileChecks':profile_checks,
         'limits':['No native editor import or device playback acceptance is established.','Decoded contact sheets and optional reference checks do not replace a full human screening.','Animation is baked within shot media; editorial interchange does not preserve source rigs.'],
-    }
-    dump(p.output/'media-verification.json',report)
+        }
+        receipt=folder/'media-verification.json';dump(receipt,report)
+        if sha(movie)!=movie_sha or p.source_inventory()[0]!=records['sourceFingerprint']:
+            raise RuntimeError('Delivery or build sources changed before verification promotion')
+        if any(sha(p.root/file)!=digest for file,digest in reference_hashes.items()):raise RuntimeError('Reference pictures changed before verification promotion')
+        review_folder.mkdir(parents=True,exist_ok=True)
+        targets=[(sheet,review_folder/sheet.name) for sheet in staged_review.iterdir()]
+        obsolete=[file for pattern in ['decoded-storyboard-*.jpg','frame-*.png'] for file in review_folder.glob(pattern) if file.name not in {x.name for x in staged_review.iterdir()}]
+        _promote_files([*targets,(receipt,p.output/'media-verification.json')],folder,remove=obsolete)
     print(f"Media checks passed: {p.frames} frames; {len(shot_checks)} shots; {len(contacts)} contact sheets; profile {selected_profile}.",flush=True)
     return report

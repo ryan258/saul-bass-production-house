@@ -1,12 +1,64 @@
 from pathlib import Path
 from fractions import Fraction
 from contextlib import contextmanager
-import json, os, shutil, subprocess, sys, tempfile, time
+from functools import wraps
+import json, os, shutil, subprocess, sys, tempfile, time, threading, uuid
 import ffmpeg
-from .project import binary, dump, sha, FRAMEWORK
+from .project import binary, dump, sha, FRAMEWORK, shot_filename, read_object, path_within
 
 COLOR=dict(color_primaries='bt709',color_trc='iec61966-2-1',colorspace='bt709',color_range='tv')
 BSF='h264_metadata=colour_primaries=1:transfer_characteristics=13:matrix_coefficients=1'
+
+_OUTPUT_LOCKS={}
+_OUTPUT_LOCK_GUARD=threading.RLock()
+
+@contextmanager
+def output_lock(project_or_output,command=None):
+    """One writer per resolved output; interrupted owners require inspection.
+
+    Nested calls in the owning thread share the lock. Other threads/processes
+    fail immediately, retaining the owner's PID and command for recovery.
+    """
+    output=Path(getattr(project_or_output,'output',project_or_output)).resolve()
+    key=str(output);owner=(os.getpid(),threading.get_ident())
+    lock=output.parent/('.'+output.name+'.sbph-build-lock')
+    with _OUTPUT_LOCK_GUARD:
+        held=_OUTPUT_LOCKS.get(key)
+        if held and held['owner']==owner:held['depth']+=1
+        else:
+            output.parent.mkdir(parents=True,exist_ok=True)
+            try:lock.mkdir()
+            except FileExistsError:
+                try:details=json.loads((lock/'owner.json').read_text());description='PID '+str(details.get('pid','unknown'))+' / '+str(details.get('command','unknown command'))
+                except (OSError,UnicodeError,json.JSONDecodeError,AttributeError):description='owner metadata unavailable'
+                raise ValueError('Output is locked: '+str(output)+' ('+description+'); finish the owning command, or inspect '+str(lock)+' before removing that lock manually') from None
+            token=uuid.uuid4().hex
+            try:(lock/'owner.json').write_text(json.dumps({'pid':owner[0],'command':command or ' '.join(sys.argv),'output':key,'createdAt':time.time(),'token':token})+'\n')
+            except BaseException:
+                try:(lock/'owner.json').unlink(missing_ok=True);lock.rmdir()
+                except BaseException:pass
+                raise
+            _OUTPUT_LOCKS[key]={'owner':owner,'depth':1,'token':token}
+    try:yield output
+    finally:
+        with _OUTPUT_LOCK_GUARD:
+            held=_OUTPUT_LOCKS.get(key)
+            if held and held['owner']==owner:
+                held['depth']-=1
+                if not held['depth']:
+                    _OUTPUT_LOCKS.pop(key)
+                    try:
+                        details=json.loads((lock/'owner.json').read_text())
+                        if details.get('token')==held['token']:(lock/'owner.json').unlink();lock.rmdir()
+                    except BaseException:
+                        try:print('sbph: Output lock retained; inspect '+str(lock),file=sys.stderr)
+                        except BaseException:pass
+
+def locked_output(function):
+    @wraps(function)
+    def locked(project,*args,**kwargs):
+        with output_lock(project,function.__name__):return function(project,*args,**kwargs)
+    return locked
 
 def probe(path):return ffmpeg.probe(str(path),cmd=binary('ffprobe'))
 
@@ -17,11 +69,12 @@ def _protect_output_inputs(p,outputs,inputs=()):
         value=getattr(p,name,None)
         if value is not None:protected.append(Path(value).resolve())
     if getattr(p,'root',None) is not None:
-        protected.append((p.root/p.data.get('edit','data/edit.json')).resolve())
+        from .fingerprint import source_paths
+        protected.extend(source_paths(p))
     for output in outputs:
         destination=Path(output).resolve()
         for original in protected:
-            if original.is_relative_to(destination):
+            if path_within(original,destination):
                 raise ValueError('Generated output would replace a protected input: '+str(original)+' -> '+str(destination))
 
 @contextmanager
@@ -86,6 +139,7 @@ def _validate_video(path,p,count,with_audio=False):
     return info
 
 
+@locked_output
 def render_picture(p,destination,start,count,shot=None):
     destination=Path(destination)
     _protect_output_inputs(p,[destination])
@@ -229,19 +283,28 @@ def _promote_files(pairs,work,remove=()):
     cleanup('Outputs promoted successfully')
 
 
-def render_shots(p,selected=None,resume=False):
+@locked_output
+def render_shots(p,selected=None,resume=False,repair_manifest=False):
     from .fingerprint import BUILD_SCHEMA
     from .shot_backend import backend, renderer_record
     from .validation import validate_edit,validate_source_audio,validate_shot_record
     manifest_path=p.output/'shots.json'
     scenes=[s for s in p.edit['scenes'] if selected is None or s['id'] in selected]
-    _protect_output_inputs(p,[manifest_path,*[p.output/'shots'/f"{s['id']}-{s['kind']}.mp4" for s in scenes]])
+    _protect_output_inputs(p,[manifest_path,*[p.output/'shots'/shot_filename(s) for s in scenes]])
     validate_edit(p);validate_source_audio(p)
     if selected is not None:
         unknown=selected-{s['id'] for s in p.edit['scenes']}
         if unknown:raise ValueError('Unknown shot IDs: '+', '.join(sorted(unknown)))
-    prior=json.loads(manifest_path.read_text()) if manifest_path.exists() else {'shots':{}}
-    if not isinstance(prior,dict):raise ValueError('Shot manifest must be an object')
+    try:
+        prior=read_object(manifest_path,'Shot manifest') if manifest_path.exists() else {'shots':{}}
+        if not isinstance(prior.get('shots'),dict):raise ValueError('Shot manifest shots must be an object')
+    except ValueError as error:
+        if not repair_manifest:raise ValueError(str(error)+'; inspect it, then use shots --repair-manifest to preserve the damaged record and rebuild') from error
+        backup=manifest_path.with_name('shots.damaged-'+uuid.uuid4().hex+'.json')
+        _protect_output_inputs(p,[backup])
+        with backup.open('xb') as stream:stream.write(manifest_path.read_bytes())
+        print('sbph: Damaged shot manifest preserved: '+str(backup),file=sys.stderr)
+        prior={'shots':{}}
     fingerprint,inventory=p.source_inventory()
     renderer=renderer_record(p)
     header={'schemaVersion':BUILD_SCHEMA,'project':p.edit['title'],'fps':p.fps,
@@ -257,7 +320,7 @@ def render_shots(p,selected=None,resume=False):
             raise RuntimeError('Sources changed during render; previous clip and manifest preserved')
     for i,s in enumerate(scenes):
         body=s['end']-s['start'];count=body+2*p.handles
-        file=p.output/'shots'/f"{s['id']}-{s['kind']}.mp4"
+        file=p.output/'shots'/shot_filename(s)
         if resume and s['id'] in records:
             try:validate_shot_record(p,s,records[s['id']],fingerprint)
             except (ValueError,OSError,ffmpeg.Error):pass
@@ -286,6 +349,7 @@ def render_shots(p,selected=None,resume=False):
     print(f'Shot build: {rendered} rendered, {reused} reused after verification.',flush=True)
     return manifest_path
 
+@locked_output
 def mux_master(p,picture,output):
     from .verify import project_audio_comparison
     picture=Path(picture);output=Path(output)
@@ -303,6 +367,7 @@ def mux_master(p,picture,output):
         candidate.replace(output)
 
 
+@locked_output
 def assemble(p):
     """Assemble the editorial bodies with FFmpeg, leaving shot handles out of the master."""
     from .validation import validate_shot_set

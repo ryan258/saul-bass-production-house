@@ -7,7 +7,7 @@ import wave
 
 import numpy as np
 from sbph.project import binary
-from sbph.verify import audio_comparison
+from sbph.verify import audio_comparison,compare_channels
 
 
 class AudioComparison(unittest.TestCase):
@@ -18,7 +18,7 @@ class AudioComparison(unittest.TestCase):
         self.source.write_bytes(b'source');self.delivery.write_bytes(b'delivery')
 
     def compare(self,source,delivery,codec='pcm_s16le'):
-        with patch('sbph.verify.decode_mono',side_effect=[source,delivery]),patch('sbph.verify.probe',return_value={'streams':[{'codec_type':'audio','codec_name':codec,'sample_rate':'48000' if codec=='aac' else '16000'}]}):
+        with patch('sbph.verify.decode_mono',side_effect=[source,delivery]),patch('sbph.verify.channel_comparison',return_value={'fixture':'mono checks only'}),patch('sbph.verify.probe',return_value={'streams':[{'codec_type':'audio','codec_name':codec,'sample_rate':'48000' if codec=='aac' else '16000'}]}):
             return audio_comparison(self.source,self.delivery)
 
     def test_short_recording_has_alignment_windows(self):
@@ -73,6 +73,31 @@ class AudioComparison(unittest.TestCase):
                 with patch('sbph.verify.decode_mono',side_effect=decode),patch('sbph.verify.probe',return_value={'streams':[stream]}):
                     with self.assertRaisesRegex(RuntimeError,'Source audio changed during comparison'):
                         audio_comparison(self.source,self.delivery)
+
+    def test_channel_content_and_level_cannot_hide_in_identical_mono_sum(self):
+        t=np.arange(48000)/48000
+        stereo=np.column_stack((.3*np.sin(2*np.pi*191*t),.2*np.sin(2*np.pi*431*t))).astype(np.float32)
+        self.assertEqual(len(compare_channels(stereo,stereo.copy())['channels']),2)
+        for changed in [stereo[:,::-1],np.repeat(stereo.mean(axis=1)[:,None],2,axis=1),stereo*.5,stereo*1.1]:
+            with self.subTest(change=changed.shape),self.assertRaisesRegex(ValueError,'channel'):
+                compare_channels(stereo,changed)
+
+    def test_one_silent_channel_is_checked_independently(self):
+        stereo=np.column_stack((self.signal,np.zeros_like(self.signal)))
+        self.assertIsNone(compare_channels(stereo,stereo)['channels'][1]['correlation'])
+        changed=stereo.copy();changed[:,1]=self.signal*.1
+        with self.assertRaisesRegex(ValueError,'Silent audio channel'):compare_channels(stereo,changed)
+
+    def test_actual_stereo_swap_and_gain_change_are_rejected(self):
+        t=np.arange(24000)/48000
+        samples=np.column_stack((np.sin(2*np.pi*191*t),np.sin(2*np.pi*431*t)))*8000
+        def write(path,values):
+            with wave.open(str(path),'wb') as stream:
+                stream.setparams((2,2,48000,0,'NONE','not compressed'));stream.writeframes(values.astype('<i2').tobytes())
+        write(self.source,samples)
+        for values in [samples[:,::-1],samples*.5]:
+            write(self.delivery,values)
+            with self.assertRaises(ValueError):audio_comparison(self.source,self.delivery)
 
 
 if __name__=='__main__':unittest.main()

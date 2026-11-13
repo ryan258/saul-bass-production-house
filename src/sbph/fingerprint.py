@@ -14,7 +14,7 @@ import os
 import subprocess
 import sys
 
-from .project import FRAMEWORK, binary, sha
+from .project import FRAMEWORK, binary, sha, path_within
 
 BUILD_SCHEMA = 2
 DEFAULT_GLOBS = ['src/**/*', 'assets/**/*', 'data/**/*']
@@ -150,26 +150,49 @@ def browser_identity():
     return _browser_file(str(file),stat.st_size,stat.st_mtime_ns,stat.st_ctime_ns)
 
 
-def build_inventory(p):
+def source_paths(p):
+    """Enumerate original paths without hashing or starting tools.
+
+    Globs never collect production output or disposable work. Explicit files
+    remain originals even inside output, so destination guards can protect them.
+    """
     from .shot_backend import backend, motion_projects
     renderer=backend(p)
     paths={p.audio,(p.root/p.data.get('edit','data/edit.json')).resolve()}
-    if renderer=='svg':paths.add(p.driver)
+    if renderer=='svg':paths.add(Path(getattr(p,'driver',p.root/p.data.get('driver','src/film.cjs'))).resolve())
     else:
         for project in motion_projects(p).values():
             paths.update(f.resolve() for f in project.parent.rglob('*') if f.is_file()
                 and not IGNORED.intersection(f.relative_to(project.parent).parts)
-                and not f.resolve().is_relative_to(p.output))
+                and not path_within(f,p.output))
     for pattern in p.data.get('source_globs',DEFAULT_GLOBS):
-        paths.update(f.resolve() for f in p.root.glob(pattern) if f.is_file() and not IGNORED.intersection(f.relative_to(p.root).parts))
+        prefix=[]
+        for part in Path(pattern).parts:
+            if any(char in part for char in '*?['):break
+            prefix.append(part)
+        if prefix and path_within(p.root/Path(*prefix),p.output):raise ValueError('source_globs cannot target production output; declare intentional originals with source_files: '+pattern)
+        paths.update(f.resolve() for f in p.root.glob(pattern) if f.is_file()
+            and not IGNORED.intersection(f.relative_to(p.root).parts)
+            and not any(part.startswith(('.sbph-','.shot-build-','.picture-','.mux-','.assembly-','.proof-','.promotion-recovery-')) or part.endswith('.sbph-build-lock') for part in f.relative_to(p.root).parts)
+            and not path_within(f,p.output))
     for name in p.data.get('source_files',[]):
         file=(p.root/name).resolve()
         if not file.is_file():raise ValueError('Declared source is missing: '+str(file))
         paths.add(file)
+    return {Path(file).resolve() for file in paths}
+
+
+def build_inventory(p):
+    from .shot_backend import backend
+    renderer=backend(p);paths=source_paths(p)
     def label(file):
         try:return file.relative_to(p.root).as_posix()
         except ValueError:return 'external:'+str(file)
-    inventory=[{'file':label(f),'sha256':sha(f)} for f in sorted(paths)]
+    cues=None
+    if isinstance(p.data.get('motion_registration'),dict) and p.data['motion_registration'].get('schemaVersion')==2:
+        from .motion_registration import native_plan,cue_identity
+        _,cues=native_plan((p.root/p.data['motion_registration']['project']).resolve())
+    inventory=[{'file':label(f),'sha256':cue_identity(f) if f==cues else sha(f)} for f in sorted(paths)]
     framework_files=list((FRAMEWORK/'src/sbph').glob('*.py'))+list((FRAMEWORK/'render').glob('*.cjs'))
     framework_files += [FRAMEWORK/name for name in ['package.json','package-lock.json','pyproject.toml','requirements.lock']]
     if renderer=='motion-canvas':framework_files += list((FRAMEWORK/'motion-canvas').glob('*.*'))

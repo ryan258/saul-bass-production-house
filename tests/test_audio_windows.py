@@ -113,6 +113,16 @@ class EditorialAudioWindows(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'shorter than the requested editorial'):
             audio_comparison(short,self.exact,source_window=(0,.5))
 
+    def test_fractional_sixteen_khz_window_uses_actual_resampler_count(self):
+        source=self.root/'fractional-source.wav';write_wav(source,self.samples)
+        for start in [0,1]:
+            with self.subTest(start=start):
+                delivery=self.root/f'fractional-{start}.wav'
+                subprocess.run([binary('ffmpeg'),'-v','error','-ss',str(start/30),'-i',str(source),'-t',str(1/30),'-c:a','pcm_s16le',str(delivery)],check=True)
+                report=project_audio_comparison(SimpleNamespace(audio=source,frames=30,fps=30),delivery,start=start,frames=1)
+                self.assertLessEqual(abs(report['sourceWindow']['samplesAt16k']-round(16000/30)),1)
+                self.assertEqual(report['decodedSampleDifferenceAt16k'],0)
+
     def test_generic_verification_and_conform_use_editorial_window(self):
         movie=self.output/'assembly.mp4';shutil.copy2(self.movie,movie)
         reference=self.root/'reference.mp4';shutil.copy2(self.movie,reference)

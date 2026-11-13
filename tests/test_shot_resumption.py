@@ -47,6 +47,22 @@ class ShotResumption(unittest.TestCase):
         self.assertEqual(before,(self.manifest.read_bytes(),self.manifest.stat().st_mtime_ns))
         validate_shot_set(self.p)
 
+    def test_damaged_manifest_requires_explicit_preserving_repair(self):
+        for damaged in [b'{broken JSON',b'[]',b'{"shots":[]}']:
+            with self.subTest(damaged=damaged):
+                self.manifest.write_bytes(damaged)
+                before={file:file.read_bytes() for file in (self.p.output/'shots').glob('*.mp4')}
+                with patch('sbph.media.render_picture') as renderer:
+                    with self.assertRaisesRegex(ValueError,'--repair-manifest'):self.render(resume=True)
+                    renderer.assert_not_called()
+                self.assertEqual(self.manifest.read_bytes(),damaged)
+                self.assertEqual(before,{file:file.read_bytes() for file in before})
+                prior=set(self.p.output.glob('shots.damaged-*.json'))
+                with patch('sbph.media.render_picture',side_effect=self.fake_render):self.render(resume=True,repair_manifest=True)
+                backups=set(self.p.output.glob('shots.damaged-*.json'))-prior
+                self.assertEqual(len(backups),1);self.assertEqual(backups.pop().read_bytes(),damaged)
+                validate_shot_set(self.p)
+
     def test_missing_corrupt_or_bad_range_clip_is_rendered_without_repeating_good_shot(self):
         for problem in ['missing','corrupt','range','hash-matching-undecodable']:
             with self.subTest(problem=problem):

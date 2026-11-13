@@ -5,7 +5,7 @@ import json
 import math
 
 from .fingerprint import BUILD_SCHEMA
-from .project import sha
+from .project import sha,shot_filename,read_object
 
 
 def validate_edit(p):
@@ -15,11 +15,7 @@ def validate_edit(p):
         for key in ['kind','name','action']:
             if not isinstance(scene.get(key),str) or not scene[key]:
                 raise ValueError(f"Shot {scene['id']} requires {key}")
-    for event in p.edit.get('events',[]):
-        if type(event.get('frame')) is not int or not 0<=event['frame']<p.frames:
-            raise ValueError('Event frame must be inside the edit')
-        for key in ['id','basis','meaning']:
-            if not isinstance(event.get(key),str):raise ValueError('Event requires '+key)
+    story_events(p.edit)
 
 
 def story_events(edit):
@@ -28,16 +24,36 @@ def story_events(edit):
     A native Motion Canvas plan records its selected accents and physical impacts
     (pulses) on each shot but has no top-level events array.
     """
-    if 'events' in edit:return edit['events']
+    if not isinstance(edit,dict) or type(edit.get('frames')) is not int or edit['frames']<1:raise ValueError('Story markers require an edit with a positive integer frame count')
+    if 'events' in edit:
+        events=edit['events']
+        if not isinstance(events,list):raise ValueError('Edit events must be a list of event objects')
+        for event in events:
+            if not isinstance(event,dict):raise ValueError('Edit events must be a list of event objects')
+            if type(event.get('frame')) is not int or not 0<=event['frame']<edit['frames']:raise ValueError('Event frame must be inside the edit')
+            for key in ['id','basis','meaning']:
+                if not isinstance(event.get(key),str) or not event[key].strip():raise ValueError('Event requires non-empty '+key)
+        if len({event['id'] for event in events})!=len(events):raise ValueError('Event IDs must be unique')
+        return events
+    if not isinstance(edit.get('scenes'),list) or any(not isinstance(scene,dict) for scene in edit['scenes']):raise ValueError('Story markers require a list of shot objects')
     rows=[]
     for scene in edit['scenes']:
         taken=set()
+        for key in ['accents','pulses']:
+            if not isinstance(scene.get(key,[]),list) or any(not isinstance(row,dict) for row in scene.get(key,[])):raise ValueError('Shot '+str(scene.get('id','?'))+' '+key+' must be a list of objects')
+            for row in scene.get(key,[]):
+                frame=row.get('frame')
+                if type(frame) is not int or not 0<=frame<edit['frames']:raise ValueError('Accent and impact frames must be inside the edit')
+                if type(scene.get('start')) is not int or type(scene.get('end')) is not int or not scene['start']<=frame<scene['end']:raise ValueError('Accent and impact frames must be inside their owning shot: '+str(scene.get('id','?')))
+                if not isinstance(scene.get('id'),str) or not scene['id'] or not isinstance(scene.get('name'),str) or not scene['name']:raise ValueError('Story marker shots require id and name')
+                if 'meaning' in row and (not isinstance(row['meaning'],str) or not row['meaning'].strip()):raise ValueError('Story marker meaning must be a non-empty string')
         for accent in scene.get('accents',[]):
+            if accent['frame'] in taken:continue
             meaning=accent.get('meaning') or 'Selected accent'
             rows.append({'id':f"{scene['id']} / {meaning}",'frame':accent['frame'],'basis':'accent','meaning':meaning});taken.add(accent['frame'])
         for hit in scene.get('pulses',[]):
-            if hit['frame'] not in taken:rows.append({'id':f"{scene['id']} / impact",'frame':hit['frame'],'basis':'action','meaning':'Impact in '+scene['name']})
-    if any(type(row['frame']) is not int or not 0<=row['frame']<edit['frames'] for row in rows):raise ValueError('Accent and impact frames must be inside the edit')
+            if hit['frame'] not in taken:
+                rows.append({'id':f"{scene['id']} / impact",'frame':hit['frame'],'basis':'action','meaning':'Impact in '+scene['name']});taken.add(hit['frame'])
     return sorted(rows,key=lambda row:row['frame'])
 
 
@@ -65,8 +81,7 @@ def validate_shot_set(p):
     validate_edit(p)
     path=p.output/'shots.json'
     if not path.is_file():raise ValueError('Shot manifest is missing; render shots first')
-    manifest=json.loads(path.read_text())
-    if not isinstance(manifest,dict):raise ValueError('Shot manifest must be an object')
+    manifest=read_object(path,'Shot manifest')
     if manifest.get('schemaVersion')!=BUILD_SCHEMA:
         raise ValueError('Legacy shot manifest: rebuild all shots with build schema 2; existing outputs have not been changed')
     fingerprint,inventory=p.source_inventory()
@@ -99,7 +114,7 @@ def validate_shot_record(p,scene,row,fingerprint,movie=None):
     if any(type(row.get(k)) is not int or row[k]!=value for k,value in expected.items()):
         raise ValueError('Invalid frame/handle ranges for shot '+scene['id'])
     if not isinstance(row.get('handlePolicy'),str):raise ValueError('Missing handle policy for shot '+scene['id'])
-    filename=f"{scene['id']}-{scene['kind']}.mp4"
+    filename=shot_filename(scene)
     if not isinstance(row.get('file'),str) or Path(row['file']).name!=filename:
         raise ValueError('Unexpected media filename for shot '+scene['id'])
     file=Path(movie) if movie is not None else p.output/'shots'/filename
@@ -120,8 +135,9 @@ def validate_shot_record(p,scene,row,fingerprint,movie=None):
 def audio_cues(p):
     path=p.output/'audio-cues.json'
     if not path.exists():return []
-    data=json.loads(path.read_text())
+    data=read_object(path,'Audio cues')
     if data.get('sourceSha256')!=sha(p.audio):raise ValueError('Audio changed; rerun analysis and review the edit')
+    if not isinstance(data.get('markerCandidates'),list) or any(not isinstance(cue,dict) for cue in data['markerCandidates']):raise ValueError('Audio markerCandidates must be a list of objects; rerun analysis')
     result=[]
     for cue in data['markerCandidates']:
         seconds=cue.get('seconds')

@@ -1,18 +1,23 @@
-import argparse,json,subprocess,sys
+import argparse,json,subprocess,sys,shlex
 from pathlib import Path
 from .project import Project
 
 def main():
     parser=argparse.ArgumentParser(prog='sbph',description='Local video tools built on FFmpeg, librosa, and OpenTimelineIO.')
-    parser.add_argument('command',choices=['package','package-check','compare-return','status','resume','animatic','revision','note','notes','resolve','reanchor','intent','proof','motion-proof','motion-editor','motion-film','motion-film-editor','analyze','shots','timeline','assemble','validate','check','conform','doctor','resolve-check','resolve-record'])
+    parser.add_argument('command',choices=['package','package-check','compare-return','status','resume','animatic','revision','note','notes','resolve','reanchor','intent','proof','motion-proof','motion-editor','motion-film','motion-film-editor','motion-cache-status','analyze','shots','timeline','assemble','validate','check','conform','doctor','preflight','evidence','screen-record','resolve-check','resolve-record'])
     parser.add_argument('project',help='production.json, or a handoff folder for package-check/compare-return')
     parser.add_argument('--resolve-version',help='resolve-record: Resolve edition and version, such as "19.1 Free"')
+    parser.add_argument('--accept-edits',action='store_true',help='resolve-record: attest that reported editorial timing changes are intentional; media/audio/structure checks still apply')
     for flag,text in [('imported','edit.otio imported without errors'),('linked','every clip online'),('markers-visible','markers visible where placed'),('audio-locked','original audio track locked')]:
         parser.add_argument('--'+flag,action='store_true',help='resolve-record: confirm '+text)
     parser.add_argument('--out',help='New package folder or new comparison report file; existing paths are refused')
     parser.add_argument('--returned',help='Human editor return .otio file')
     parser.add_argument('--shot',action='append',help='Render only this shot ID; repeat for more than one')
     parser.add_argument('--resume',action='store_true',dest='resume_shots',help='For shots: reuse only current clips that pass record, hash, range, and media checks')
+    parser.add_argument('--repair-manifest',action='store_true',help='shots: preserve a damaged manifest under a unique name and rebuild unverifiable records')
+    parser.add_argument('--repair-cache',action='store_true',help='motion-film: preserve a damaged cache receipt and rebuild unverifiable sections')
+    parser.add_argument('--screened',action='store_true',help='screen-record: attest that you watched the entire delivery')
+    parser.add_argument('--first-cuts-reviewed',action='store_true',help='screen-record: attest that you reviewed the first frames at cuts')
     parser.add_argument('--start',type=float,help='Proof start in seconds (project proof_start, otherwise 0)')
     parser.add_argument('--duration',type=float,help='Proof length in seconds (project proof_duration, otherwise 15)')
     parser.add_argument('--delivery',help='Movie to check, relative to the film root or absolute')
@@ -35,12 +40,16 @@ def main():
         parser.add_argument('--'+field.replace('_','-'),help='Optional shot intent: '+field.replace('_',' '))
     args=parser.parse_args()
     if args.resume_shots and args.command!='shots':parser.error('--resume is only valid with shots')
+    if args.repair_manifest and args.command!='shots':parser.error('--repair-manifest is only valid with shots')
+    if args.repair_cache and args.command!='motion-film':parser.error('--repair-cache is only valid with motion-film')
+    if (args.screened or args.first_cuts_reviewed) and args.command!='screen-record':parser.error('Screening confirmations are only valid with screen-record')
+    if args.accept_edits and args.command!='resolve-record':parser.error('--accept-edits is only valid with resolve-record')
     if args.command in {'resolve-check','resolve-record'}:
         from . import resolve as acceptance
         if args.command=='resolve-check':result=acceptance.check(args.project)
-        else:result=acceptance.record(args.project,args.resolve_version,{'imported':args.imported,'linked':args.linked,'markersVisible':args.markers_visible,'audioLocked':args.audio_locked},args.returned,args.text)
+        else:result=acceptance.record(args.project,args.resolve_version,{'imported':args.imported,'linked':args.linked,'markersVisible':args.markers_visible,'audioLocked':args.audio_locked},args.returned,args.text,accept_edits=args.accept_edits)
         print(json.dumps(result,indent=2) if args.json else acceptance.display(result))
-        return
+        return 0 if result['status'] in {'passed','attested'} else 1
     if args.command in {'package-check','compare-return'}:
         from .handoff import check_package
         if args.command=='package-check':
@@ -58,7 +67,7 @@ def main():
             print(json.dumps(result,indent=2) if args.json else display(result))
         return
     planning={'status','resume','note','notes','resolve','reanchor','intent'}
-    p=Project.load(args.project,require_audio=args.command not in planning)
+    p=Project.load(args.project,require_audio=args.command not in planning|{'doctor','preflight','evidence','motion-cache-status'})
     if args.command in planning|{'animatic','revision'}:
         from . import workflow as flow
         if args.shot and len(args.shot)!=1:raise ValueError('This workflow command selects one shot at a time')
@@ -122,7 +131,11 @@ def main():
         editor(p,args.motion_project)
     elif args.command=='motion-film':
         from .motion_film import build
-        build(p,args.motion_project,args.chunk_frames)
+        build(p,args.motion_project,args.chunk_frames,repair_cache=args.repair_cache)
+    elif args.command=='motion-cache-status':
+        from .motion_film import cache_status
+        result=cache_status(p,args.motion_project,args.chunk_frames)
+        print(json.dumps(result,indent=2))
     elif args.command=='motion-film-editor':
         from .motion_film import editor
         editor(p,args.motion_project)
@@ -131,7 +144,7 @@ def main():
         analyze(p)
     elif args.command=='shots':
         from .media import render_shots
-        render_shots(p,set(args.shot) if args.shot else None,resume=args.resume_shots)
+        render_shots(p,set(args.shot) if args.shot else None,resume=args.resume_shots,repair_manifest=args.repair_manifest)
     elif args.command=='timeline':
         from .timeline import timeline
         timeline(p)
@@ -144,16 +157,35 @@ def main():
     elif args.command=='conform':
         from .assembly_check import check
         check(p,args.reference)
+    elif args.command in {'preflight','evidence','screen-record'}:
+        from .evidence import preflight,saved_records,record_screening
+        result=preflight(p) if args.command=='preflight' else saved_records(p) if args.command=='evidence' else record_screening(p,args.screened,args.first_cuts_reviewed,args.text)
+        print(json.dumps(result,indent=2,ensure_ascii=False))
+        return 1 if args.command=='preflight' and result['status']!='ready' else 0
     else:
         import importlib.metadata,shutil
+        from .project import binary
         from .resolve import detect as detect_resolve
-        print(json.dumps({'project':str(p.config),'libraries':{n:importlib.metadata.version(n) for n in ['opentimelineio','ffmpeg-python','librosa','moviepy']},'binaries':{n:shutil.which(n) for n in ['node','ffmpeg','ffprobe']},'resolve':detect_resolve(),'noExternalMediaCalls':True},indent=2))
+        binaries={};libraries={}
+        for name in ['node','ffmpeg','ffprobe']:
+            try:value=binary(name);binaries[name]={'configured':value,'resolved':shutil.which(value)}
+            except ValueError as error:binaries[name]={'error':str(error)}
+        for name in ['opentimelineio','ffmpeg-python','librosa','moviepy']:
+            try:libraries[name]=importlib.metadata.version(name)
+            except importlib.metadata.PackageNotFoundError:libraries[name]='missing; run scripts/setup.sh'
+        print(json.dumps({'project':str(p.config),'libraries':libraries,'binaries':binaries,'resolve':detect_resolve(),'noExternalMediaCalls':True},indent=2))
 
 if __name__=='__main__':
-    try:main()
+    import ffmpeg
+    try:sys.exit(main() or 0)
     except subprocess.CalledProcessError as e:
-        print(f'sbph: command failed ({e.returncode}): '+' '.join(map(str,e.cmd)),file=sys.stderr);sys.exit(1)
+        print(f'sbph: command failed ({e.returncode}): '+' '.join(shlex.join(list(map(str,e.cmd))).split()),file=sys.stderr);sys.exit(1)
     except KeyError as e:
         print(f'sbph: missing required field {e} in the edit or configuration',file=sys.stderr);sys.exit(1)
-    except (ValueError,RuntimeError,FileNotFoundError,AssertionError) as e:
-        print('sbph: '+str(e),file=sys.stderr);sys.exit(1)
+    except ffmpeg.Error as e:
+        detail=(e.stderr or b'').decode('utf-8',errors='replace') if isinstance(e.stderr,bytes) else str(e.stderr or e)
+        print('sbph: FFmpeg failed: '+' '.join(detail.split())[-1200:],file=sys.stderr);sys.exit(1)
+    except (ValueError,RuntimeError,OSError,AssertionError,TypeError,AttributeError) as e:
+        print('sbph: '+' '.join(str(e).split()),file=sys.stderr);sys.exit(1)
+    except KeyboardInterrupt:
+        print('sbph: interrupted; inspect status and retained diagnostics before resuming',file=sys.stderr);sys.exit(130)
