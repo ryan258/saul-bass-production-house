@@ -26,12 +26,12 @@ class MotionFilmPreservation(unittest.TestCase):
         self.audio=self.root/'audio.wav';shutil.copy2(native/'audio.wav',self.audio)
         self.baseline=self.root/'baseline.mp4';self.baseline.write_bytes(b'baseline movie')
         self.spec={'frames':60,'fps':30,'width':16,'height':16,'scene':'film'}
-        self.plan={'frames':60,'fps':30,'sourceAudioSha256':sha(self.audio),'scenes':[
+        self.plan={'frames':60,'fps':30,'width':16,'height':16,'sourceAudioSha256':sha(self.audio),'scenes':[
             {'id':key,'start':start,'end':start+30,'name':'Fixture','animations':[],'accents':[]}
             for key,start in [('01',0),('02',30)]]}
         dump(native/'proof.json',self.spec);dump(native/'edit.json',self.plan)
         dump(native/'film.meta',{'timeEvents':[{'name':'cut-02','targetTime':1},{'name':'cut-end','targetTime':2}]})
-        self.p=SimpleNamespace(root=self.root,output=self.root/'production',audio=self.audio,
+        self.p=SimpleNamespace(root=self.root,output=self.root/'production',audio=self.audio,driver=self.root/'driver.cjs',
             data={'motion_canvas_full':'native/project.ts','motion_full_baseline':'baseline.mp4'},public_path=lambda path:Path(path))
         self.out=self.p.output/'motion-canvas-full';self.out.mkdir(parents=True)
         self.final=self.out/'unit-9-motion-canvas-v01.mp4';self.cache=self.out/'chunks.json'
@@ -41,9 +41,10 @@ class MotionFilmPreservation(unittest.TestCase):
         self.before=self.delivery_snapshot();self.fingerprint='current identity'
         self.stack=contextlib.ExitStack();self.addCleanup(self.stack.close)
         self.stack.enter_context(patch('sbph.motion_film.binary',return_value='node'))
-        self.stack.enter_context(patch('sbph.motion_film.subprocess.run',return_value=subprocess.CompletedProcess([],0)))
+        self.stack.enter_context(patch('sbph.motion_film.run_native',return_value=subprocess.CompletedProcess([],0)))
         self.stack.enter_context(patch('sbph.motion_film.inventory',side_effect=lambda project:(self.fingerprint,[{'file':'project.ts','sha256':'fixture'}])))
         self.stack.enter_context(patch('sbph.motion_film.verify_audio_window',return_value='window hash'))
+        self.baseline_check=self.stack.enter_context(patch('sbph.motion_film.validate_baseline',return_value={'sampleRate':48000,'channels':2,'comparison':{'fixture':True}}))
         self.renderer=self.stack.enter_context(patch('sbph.motion_film.render',side_effect=self.render))
         self.encoder=self.stack.enter_context(patch('sbph.motion_film.encode',side_effect=self.encode))
         self.check=self.stack.enter_context(patch('sbph.motion_film.check_video',return_value={}))
@@ -83,11 +84,12 @@ class MotionFilmPreservation(unittest.TestCase):
     def test_success_promotes_one_complete_generation_and_removes_obsolete_sheet(self):
         self.assertEqual(self.build(),self.final)
         self.assertEqual(self.final.read_bytes(),b'new movie generation')
-        self.assertEqual(set(path.name for path in (self.out/'source-frames').iterdir()),{'000000.png','000059.png'})
+        self.assertEqual(set(path.name for path in (self.out/'source-frames').iterdir()),{'000000.png','000029.png','000030.png','000059.png'})
         self.assertFalse((self.out/'decoded-shots-02.jpg').exists())
         report=json.loads((self.out/'verification.json').read_text())
         self.assertEqual(report['file'],str(self.final));self.assertEqual(report['sha256'],sha(self.final))
         self.assertEqual(report['humanScreening'],'not recorded for this build')
+        self.assertEqual(report['cutFrameReview']['status'],'human-review-required')
         for row in report['artifacts']:self.assertEqual(sha(self.out/row['file']),row['sha256'])
         self.assertEqual(json.loads((self.out/'effective-edit.json').read_text()),self.plan)
         self.assertEqual(self.project.read_text(),'fixture source')
@@ -284,6 +286,36 @@ class MotionFilmPreservation(unittest.TestCase):
                 self.assertEqual(self.final.read_bytes(),b'new movie generation')
                 report=json.loads((self.out/'verification.json').read_text())
                 self.assertEqual(report['sha256'],sha(self.final))
+
+    def test_invalid_baseline_audio_fails_before_render_or_cache_write(self):
+        self.baseline_check.side_effect=ValueError('Full-film baseline audio differs')
+        with self.assertRaisesRegex(ValueError,'baseline audio'):self.build()
+        self.renderer.assert_not_called();self.assertFalse(self.cache.exists());self.assert_previous_delivery()
+
+    def test_damaged_receipt_needs_explicit_preserving_repair(self):
+        self.cache.write_bytes(b'{damaged receipt')
+        with self.assertRaisesRegex(ValueError,'repair-cache'):self.build()
+        self.renderer.assert_not_called();self.assertEqual(self.cache.read_bytes(),b'{damaged receipt')
+        with contextlib.redirect_stdout(io.StringIO()):film.build(self.p,chunk_frames=30,repair_cache=True)
+        saved=list(self.out.glob('chunks.damaged-*.json'));self.assertEqual(len(saved),1)
+        self.assertEqual(saved[0].read_bytes(),b'{damaged receipt');self.assertEqual(len(json.loads(self.cache.read_text())['chunks']),2)
+
+    def test_one_second_sections_follow_the_film_frame_rate(self):
+        self.spec.update(frames=48,fps=24);self.plan.update(frames=48,fps=24)
+        self.plan['scenes'][0]['end']=24;self.plan['scenes'][1].update(start=24,end=48)
+        dump(self.project.parent/'proof.json',self.spec);dump(self.project.parent/'edit.json',self.plan)
+        with contextlib.redirect_stdout(io.StringIO()):film.build(self.p,chunk_frames=24)
+        self.assertEqual([call.args[2] for call in self.renderer.call_args_list],[0,24])
+        self.assertEqual(json.loads(self.cache.read_text())['chunkFrames'],24)
+
+    def test_cache_status_is_read_only_and_distinguishes_hashes_from_probe_acceptance(self):
+        self.build();before={file:file.read_bytes() for file in self.out.rglob('*') if file.is_file()}
+        self.check.reset_mock();self.renderer.reset_mock();report=film.cache_status(self.p,chunk_frames=30)
+        self.assertEqual(report['status'],'current-receipt');self.assertTrue(all(row['status']=='hashes-match' for row in report['chunks']))
+        self.check.assert_not_called();self.renderer.assert_not_called();self.assertEqual(before,{file:file.read_bytes() for file in self.out.rglob('*') if file.is_file()})
+        (self.out/'chunks/000.mp4').write_bytes(b'damaged media')
+        self.assertEqual(film.cache_status(self.p,chunk_frames=30)['chunks'][0]['status'],'media-or-evidence-changed')
+        self.fingerprint='new sources';self.assertEqual(film.cache_status(self.p,chunk_frames=30)['status'],'stale-receipt')
 
 
 class TinyNativeMedia(unittest.TestCase):

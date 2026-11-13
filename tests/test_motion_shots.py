@@ -88,10 +88,34 @@ class MotionShots(unittest.TestCase):
                 copied=Path(args[3]);(copied.parent/'scene.meta').write_text('renderer cache')
                 return subprocess.CompletedProcess(args,0,stdout='{"result":0,"errors":[]}\n',stderr='')
             return subprocess.CompletedProcess(args,0)
-        with patch('sbph.motion_shots.subprocess.run',side_effect=run):export_body(self.p,project,work,3,9)
+        with patch('sbph.motion_shots.run_native',side_effect=run):export_body(self.p,project,work,3,9)
         self.assertEqual(meta.read_bytes(),before)
         self.assertEqual(json.loads(calls[-1][-1])['startFrame'],9)
         self.assertNotEqual(Path(calls[-1][3]),project)
+
+    def test_renderer_canonicalizes_symlinked_source_and_work_roots(self):
+        alias=self.root/'native-path-alias';alias.symlink_to(self.root.resolve(),target_is_directory=True)
+        project=alias/'motion/1/project.ts';meta=project.parent/'scene.meta';before=meta.read_bytes()
+        work=alias/'aliased-work';work.mkdir();calls=[]
+        def run(args,**kwargs):
+            calls.append(args)
+            if args[2]=='render':
+                copied=Path(args[3]);self.assertEqual(copied.parent,work.resolve()/'source')
+                (copied.parent/'scene.meta').write_text('renderer cache')
+                return subprocess.CompletedProcess(args,0,stdout='{"result":0,"errors":[]}\n',stderr='')
+            return subprocess.CompletedProcess(args,0)
+        with patch('sbph.motion_shots.run_native',side_effect=run):export_body(self.p,project,work,3,9)
+        self.assertEqual(meta.read_bytes(),before);self.assertEqual(Path(calls[-1][4]),work.resolve())
+        self.assertEqual(json.loads(calls[-1][-1])['startFrame'],9)
+
+    def test_source_inventory_symlink_escape_is_rejected_before_copy_or_render(self):
+        project=motion_projects(self.p)['1'];outside=self.root/'outside-native.ts';outside.write_text('unmanaged source')
+        (project.parent/'escaping.ts').symlink_to(outside.resolve())
+        work=self.root/'rejected-work';work.mkdir()
+        with patch('sbph.motion_shots.run_native') as runner:
+            with self.assertRaises(ValueError):export_body(self.p,project,work,3,9)
+        runner.assert_not_called();self.assertFalse((work/'source').exists())
+        self.assertEqual(outside.read_text(),'unmanaged source')
 
 
 if __name__=='__main__':unittest.main()

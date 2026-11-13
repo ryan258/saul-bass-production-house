@@ -1,13 +1,21 @@
 #!/bin/sh
-# Conform, package, and package-check the Unit 9 native run (default: full-run-ti36vxyf).
-# Run after: ./unit9 motion-shots --run R --resume && motion-validate/timeline/assemble/check.
+# Finish an already-rendered native run; never renders shots or edits source film files.
 set -eu
 sbph_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-run=${1:-full-run-ti36vxyf}
-base="$sbph_dir/output/unit-9-motion-handled/$run"
-reference=${UNIT9_REFERENCE:-"$HOME/Projects/nonsense/unit-9/svg-film-v01/production/motion-canvas-full/unit-9-motion-canvas-v01.mp4"}
-"$sbph_dir/sbph" conform "$base/production.json" --reference "$reference"
-"$sbph_dir/unit9" motion-package --run "$run"
-newest=$(ls -t "$base/handoffs" | head -1)
-"$sbph_dir/sbph" package-check "$base/handoffs/$newest"
-echo "Handoff ready: $base/handoffs/$newest"
+export PYTHONPATH="$sbph_dir/src${PYTHONPATH:+:$PYTHONPATH}"
+if [ "$#" -gt 1 ]; then echo "unit9: use motion-finish [RUN]" >&2; exit 1; fi
+if [ "$#" -eq 1 ]; then
+  config=$("$sbph_dir/.venv/bin/python" -m sbph.unit9_run config "$sbph_dir" "$1")
+else
+  config=$("$sbph_dir/.venv/bin/python" -m sbph.unit9_run config "$sbph_dir")
+fi
+reference=${UNIT9_REFERENCE:-"$sbph_dir/../nonsense/unit-9/svg-film-v01/production/motion-canvas-full/unit-9-motion-canvas-v01.mp4"}
+"$sbph_dir/sbph" validate "$config"
+"$sbph_dir/sbph" timeline "$config"
+"$sbph_dir/sbph" assemble "$config"
+"$sbph_dir/sbph" check "$config"
+"$sbph_dir/sbph" conform "$config" --reference "$reference"
+package_json=$("$sbph_dir/sbph" package "$config" --json)
+package_path=$(printf '%s\n' "$package_json" | "$sbph_dir/.venv/bin/python" -c 'import json,sys; print(json.load(sys.stdin)["package"])')
+"$sbph_dir/sbph" package-check "$package_path"
+printf '%s\n' "Handoff ready: $package_path" 'Human screening, first-cut review, and Resolve acceptance remain explicit separate steps.'

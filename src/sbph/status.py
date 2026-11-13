@@ -4,7 +4,7 @@ import json
 import shlex
 import subprocess
 
-from .project import FRAMEWORK,sha
+from .project import FRAMEWORK,sha,shot_filename
 from .fingerprint import BUILD_SCHEMA,inventory_changes,format_inventory_changes
 from .delivery import delivery_path
 from . import workflow as flow
@@ -48,7 +48,7 @@ def shot_build(p):
             return {'status':'incomplete','reason':'Not every current shot has a record.','productionValidation':'not run'}
         changed=[]
         for scene in p.edit['scenes']:
-            row=records[scene['id']];movie=p.output/'shots'/f"{scene['id']}-{scene['kind']}.mp4"
+            row=records[scene['id']];movie=p.output/'shots'/shot_filename(scene)
             if not isinstance(row,dict):raise ValueError('Malformed shot record: '+scene['id'])
             if not movie.is_file() or sha(movie)!=row.get('sha256'):changed.append(scene['id'])
         return {'status':'changed' if changed else 'matches','changedShots':changed,
@@ -69,11 +69,68 @@ def delivery(p):
         reported=report.get('delivery',report.get('master'))
         if expected is not None and not isinstance(expected,str):raise ValueError('Delivery report hash must be text')
         if reported is not None and (not isinstance(reported,str) or not reported):raise ValueError('Delivery report path must be non-empty text')
-        same=reported is not None and Path(reported).resolve()==movie.resolve()
+        same=reported is not None and Path(reported).resolve() in {movie.resolve(),p.public_path(movie).resolve()}
         result['verification']='saved report matches movie bytes' if same and expected==sha(movie) else 'saved report is for different or changed media'
+        result['sourceFingerprint']=report.get('sourceFingerprint');result['reportStatus']=report.get('status')
         result['limit']='Historical report identity only; this command does not repeat its media checks.'
     except (ValueError,OSError,AttributeError,TypeError) as error:result['verification']='unreadable report: '+str(error)
     return result
+
+
+def production_action(p,build,delivered):
+    """Choose the next stage from saved evidence; never executes its command."""
+    if build['status']!='matches':return None
+    fingerprint=p.source_inventory()[0];movie=delivery_path(p);assembled=p.output/'assembly.mp4'
+    timeline=p.output/p.data.get('timeline_file','human-edit.otio')
+    def action(stage,text,name=None,*args):return {'stage':stage,'text':text,'command':command(p,name,*args) if name else None}
+    timeline_current=False
+    try:
+        timeline_report=json.loads((p.output/'timeline-verification.json').read_text())
+        timeline_current=timeline.is_file() and timeline_report.get('sourceFingerprint')==fingerprint and timeline_report.get('timelineSha256')==sha(timeline)
+    except (ValueError,OSError,AttributeError):pass
+    if not timeline_current:return action('timeline','Export the current handled shots as an editable timeline.','timeline')
+    if not assembled.is_file():return action('assemble','Assemble the current shot bodies for review.','assemble')
+    if not movie.is_file():return action('delivery','Restore or configure the selected delivery: '+str(movie))
+    if delivered.get('verification')!='saved report matches movie bytes' or delivered.get('sourceFingerprint')!=fingerprint or delivered.get('reportStatus')!='passed':
+        return action('check','Check the current delivery and save its media evidence.','check')
+    conform_file=p.output/'assembly-verification.json';conform=None
+    if conform_file.is_file():
+        try:
+            candidate=json.loads(conform_file.read_text())
+            if candidate.get('sourceFingerprint')==fingerprint and candidate.get('sha256')==sha(assembled) and candidate.get('status') in {'passed','passed_with_exclusions'}:
+                from .delivery import reference_path
+                reference=reference_path(p) if p.data.get('reference') or p.data.get('master') else Path(candidate.get('referenceLocal',candidate.get('reference','')))
+                offset=(p.data.get('verification') or {}).get('conform_first_frame_offset',0)
+                if reference.is_file() and sha(reference)==candidate.get('referenceSha256') and candidate.get('firstFrameOffset',0)==offset:conform=candidate
+        except (ValueError,OSError,AttributeError):pass
+    if conform is None:
+        if p.data.get('reference') or p.data.get('master'):return action('conform','Conform against the configured viewing reference.','conform')
+        return action('conform','Choose an independent viewing reference and run conform; no full-fidelity reference check is recorded.')
+    from .evidence import screening_status
+    if screening_status(p,movie,fingerprint) is None:
+        text='Watch the complete delivery and review first cut frames, then record your screening.'
+        if conform.get('firstFrameReviewRequired'):text+=' Conform has explicit first-frame exclusions.'
+        return action('screening',text,'screen-record','--screened','--first-cuts-reviewed')
+    from .handoff import check_package
+    import opentimelineio as otio
+    packages=[]
+    for file in sorted((p.output/'handoffs').glob('*/handoff.json'),key=lambda f:f.stat().st_mtime_ns,reverse=True):
+        try:
+            data=json.loads(file.read_text())
+            if data.get('sourceFingerprint')==fingerprint:
+                check_package(file.parent);packages.append(file)
+        except (ValueError,OSError,AttributeError,RuntimeError,otio.exceptions.OTIOError):continue
+    if not packages:return action('package','Collect the current edit and media into a portable handoff.','package')
+    for file in packages:
+        identity=sha(file)
+        for receipt in file.parent.glob('resolve-acceptance-*.json'):
+            try:
+                data=json.loads(receipt.read_text());back=data.get('exportedReturn') or {}
+                if data.get('status') in {'passed','attested'} and data.get('packageIdentity',{}).get('handoffSha256')==identity and back.get('comparisonComplete') is True and back.get('originalAudioPreserved') is True:
+                    return action('recorded','Screening and Resolve evidence are recorded for this build; inspect saved evidence before any release.','evidence')
+            except (ValueError,OSError,AttributeError):continue
+    return {'stage':'resolve','text':'Complete Resolve acceptance for '+str(packages[0].parent)+'; choose the documented Studio or manual path.',
+        'command':shlex.join([str(FRAMEWORK/'sbph'),'resolve-check',str(packages[0].parent)])}
 
 
 def snapshot(p):
@@ -87,7 +144,7 @@ def snapshot(p):
                 from .drafts import artifact_status
                 artifacts=[artifact_status(p,row) for row in flow.read_state(p,'artifacts')['items'][-5:]]
         except (ValueError,OSError,KeyError,TypeError) as error:errors.append(str(error))
-    build=shot_build(p)
+    build=shot_build(p);delivered=delivery(p)
     actionable=[n for n in open_notes if n['location']['frame'] is not None]
     selected=None
     if saved:
@@ -115,10 +172,14 @@ def snapshot(p):
     elif p.data.get('renderer')!='motion-canvas' and not p.driver.is_file():
         next_action={'text':'Block out the story with placeholder cards; the renderer is not available yet.','command':command(p,'animatic')}
     else:
-        scene=p.edit['scenes'][0]
-        next_action={'text':'Review one bounded shot; no full rebuild is started.','command':revision_command(p,'shot',scene['id'])}
+        try:next_action=production_action(p,build,delivered)
+        except (ValueError,OSError,KeyError,TypeError,subprocess.SubprocessError) as error:
+            errors.append(str(error));next_action={'text':'Inspect the saved production evidence before continuing.','command':None}
+        if next_action is None:
+            scene=p.edit['scenes'][0]
+            next_action={'text':'Review one bounded shot; no full rebuild is started.','command':revision_command(p,'shot',scene['id'])}
     return {'project':str(p.config),'title':p.edit['title'],'fps':p.fps,'frames':p.frames,'shots':len(p.edit['scenes']),
-        'sourceAudioExists':p.audio.is_file(),'driverExists':p.driver.is_file(),'build':build,'delivery':delivery(p),
+        'sourceAudioExists':p.audio.is_file(),'driverExists':p.driver.is_file(),'build':build,'delivery':delivered,
         'checkpoint':saved,'openNotes':open_notes,'intentShots':list(intent),'orphanedIntentShots':sorted(set(intent)-{s['id'] for s in p.edit['scenes']}),
         'recentDrafts':artifacts,'errors':errors,'nextAction':next_action,
         'limit':'Read-only source/hash evidence; no encoding, probing, native editor acceptance, or production validation was performed.'}

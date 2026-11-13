@@ -4,9 +4,10 @@ import hashlib, json, os, shutil, subprocess, sys, tempfile, time, wave
 from fractions import Fraction
 import ffmpeg
 from PIL import Image, ImageDraw, ImageFont
-from .project import FRAMEWORK, binary, dump, sha
-from .media import COLOR, BSF, probe, _run_ffmpeg, _promote_files
+from .project import FRAMEWORK, binary, dump, sha, read_object, path_within
+from .media import COLOR, BSF, probe, _run_ffmpeg, _promote_files, locked_output, _protect_output_inputs
 from .fingerprint import BUILD_SCHEMA,browser_identity,digest
+from .motion_runtime import run_native
 
 
 def source(p, override=None):
@@ -16,7 +17,7 @@ def source(p, override=None):
 
 
 def editor(p, override=None):
-    subprocess.run([binary('node'),str(FRAMEWORK/'motion-canvas/render.mjs'),'editor',str(source(p,override)),str(p.output/'motion-canvas/editor-exports')],check=True)
+    run_native([binary('node'),str(FRAMEWORK/'motion-canvas/render.mjs'),'editor',str(source(p,override)),str(p.output/'motion-canvas/editor-exports')],check=True)
 
 
 def pcm(path):
@@ -57,7 +58,7 @@ def validate_baseline(p, project, spec, baseline):
     if not baseline.is_file():raise ValueError('Build the original proof first')
     sidecar=baseline.with_suffix('.json')
     if not sidecar.is_file():raise ValueError('Baseline proof metadata is missing: '+str(sidecar))
-    metadata=json.loads(sidecar.read_text())
+    metadata=read_object(sidecar,'Baseline proof metadata')
     if any(type(metadata.get(k)) is not int or metadata[k]!=spec[k] for k in ['sourceStartFrame','frames','fps']):
         raise ValueError('Baseline proof source window or rate differs from Motion Canvas proof')
     if metadata.get('sha256')!=sha(baseline):raise ValueError('Baseline proof hash differs from its metadata')
@@ -97,19 +98,21 @@ def comparison(baseline, new, output, work, spec):
     _run_ffmpeg(graph.global_args('-hide_banner','-loglevel','error','-filter_complex_threads','2'))
 
 
+@locked_output
 def build(p, override=None, keep_frames=False):
     project=source(p,override)
     out=(p.output/'motion-canvas').resolve()
-    if out.is_relative_to(project.parent) or project.parent.is_relative_to(out):
+    if path_within(out,project.parent) or path_within(project.parent,out):
         raise ValueError('Keep Motion Canvas proof sources and output in separate folders')
     baseline=(p.root/p.data.get('motion_baseline','production/proof.mp4')).resolve()
     final=out/'unit-9-shutdown-motion-canvas.mp4';compare=out/'unit-9-shutdown-comparison.mp4'
     managed=[final,compare,out/'proof.json',out/'source-frames',out/'render-work']
     for file in [Path(p.audio).resolve(),baseline,baseline.with_suffix('.json').resolve()]:
-        if any(file.is_relative_to(target.resolve()) for target in managed):
+        if any(path_within(file,target) for target in managed):
             raise ValueError('Motion proof original audio and baseline must be outside managed output paths: '+str(file))
+    _protect_output_inputs(p,managed,inputs=[baseline,baseline.with_suffix('.json')])
     initial_sources=motion_inventory(project)
-    spec=json.loads((project.parent/'proof.json').read_text())
+    spec=read_object(project.parent/'proof.json','Motion proof specification')
     baseline_sha=sha(baseline)
     baseline_metadata_sha=sha(baseline.with_suffix('.json'))
     original_audio_sha=sha(p.audio)
@@ -138,9 +141,9 @@ def build(p, override=None, keep_frames=False):
         original={str(f.relative_to(project.parent)):value for f,value in initial_sources.items()}
         if {str(f.relative_to(copied)):value for f,value in motion_inventory(copied_project).items()}!=original:
             raise RuntimeError('Motion Canvas source changed while taking render snapshot')
-        subprocess.run([binary('node'),str(FRAMEWORK/'motion-canvas/typecheck.mjs'),str(copied_project)],check=True)
+        run_native([binary('node'),str(FRAMEWORK/'motion-canvas/typecheck.mjs'),str(copied_project)],check=True)
         work=stage/'render-work';work.mkdir()
-        subprocess.run([binary('node'),str(FRAMEWORK/'motion-canvas/render.mjs'),'render',str(copied_project),str(work)],check=True)
+        run_native([binary('node'),str(FRAMEWORK/'motion-canvas/render.mjs'),'render',str(copied_project),str(work)],check=True)
         check_sources()
         frames=sorted((work/'frames').glob('*.png'))
         if [f.name for f in frames]!=[f'{i:06}.png' for i in range(spec['frames'])]:

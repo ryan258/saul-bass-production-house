@@ -35,7 +35,7 @@ class MotionBaseline(unittest.TestCase):
         dump(scene/'proof.json',self.spec)
         with wave.open(str(scene/'audio.wav'),'wb') as w:
             w.setparams((1,2,48000,0,'NONE','not compressed'));w.writeframes(self.samples[4800:28800].tobytes())
-        self.p=SimpleNamespace(audio=self.source,root=self.root,output=self.output,data={'motion_canvas':'scene/project.ts'},source_inventory=lambda:('fixture',[]))
+        self.p=SimpleNamespace(audio=self.source,root=self.root,output=self.output,driver=self.root/'driver.cjs',data={'motion_canvas':'scene/project.ts'},source_inventory=lambda:('fixture',[]))
         self.metadata={'sha256':sha(self.movie),'sourceStartFrame':3,'frames':15,'fps':30}
         dump(self.movie.with_suffix('.json'),self.metadata)
 
@@ -65,7 +65,7 @@ class MotionBaseline(unittest.TestCase):
     def test_build_rejects_wrong_baseline_before_typecheck_or_outputs(self):
         dump(self.movie.with_suffix('.json'),{**self.metadata,'sourceStartFrame':9})
         before={str(f.relative_to(self.root)):sha(f) for f in self.root.rglob('*') if f.is_file()}
-        with patch('sbph.motion.subprocess.run') as runner:
+        with patch('sbph.motion.run_native') as runner:
             with self.assertRaisesRegex(ValueError,'window'):build(self.p)
             runner.assert_not_called()
         self.assertEqual(before,{str(f.relative_to(self.root)):sha(f) for f in self.root.rglob('*') if f.is_file()})
@@ -74,7 +74,7 @@ class MotionBaseline(unittest.TestCase):
         final=self.output/'motion-canvas/unit-9-shutdown-motion-canvas.mp4';final.parent.mkdir();final.write_bytes(b'previous output')
         def run(command,**kwargs):
             if command[2]=='render':self.meta.write_text('{"timeEvents":[{"name":"changed"}]}')
-        with patch('sbph.motion.browser_identity',return_value={'fixture':'browser'}),patch('sbph.motion.validate_baseline',return_value={'fixture':'verified elsewhere'}),patch('sbph.motion.subprocess.run',side_effect=run),patch('sbph.motion.ffmpeg.run') as encoder:
+        with patch('sbph.motion.browser_identity',return_value={'fixture':'browser'}),patch('sbph.motion.validate_baseline',return_value={'fixture':'verified elsewhere'}),patch('sbph.motion.run_native',side_effect=run),patch('sbph.motion.ffmpeg.run') as encoder:
             with self.assertRaisesRegex(RuntimeError,'cue metadata changed'):build(self.p)
             encoder.assert_not_called()
         self.assertEqual(final.read_bytes(),b'previous output')

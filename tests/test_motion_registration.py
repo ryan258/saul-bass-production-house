@@ -1,11 +1,12 @@
 """Small native-plan registrations; no Unit 9 files or browser required."""
 from pathlib import Path
-import copy,json,shutil,subprocess,tempfile,unittest
+import contextlib,copy,io,json,shutil,subprocess,sys,tempfile,unittest
 from unittest.mock import patch
 from sbph.project import Project,dump,sha
-from sbph.motion_registration import register,validate_registration,isolate_registered_body
+from sbph.motion_registration import register,validate_registration,isolate_registered_body,main
 from sbph.motion_shots import export_body
 from sbph.shot_backend import motion_projects
+from sbph.unit9_run import select
 
 
 class MotionRegistration(unittest.TestCase):
@@ -94,13 +95,144 @@ class MotionRegistration(unittest.TestCase):
                 for i in range(45):Image.new('RGB',(16,16),'red').save(folder/f'{i:06}.png')
                 return subprocess.CompletedProcess(args,0,stdout='{"result":0,"errors":[],"cutAudit":{"02":0}}\n',stderr='')
             return subprocess.CompletedProcess(args,0)
-        with patch('sbph.motion_shots.subprocess.run',side_effect=run):export_body(p,self.source/'project.ts',work,45,45)
+        with patch('sbph.motion_shots.run_native',side_effect=run):export_body(p,self.source/'project.ts',work,45,45)
         self.assertEqual(options[0]['startFrame'],0)
         self.assertEqual([f.name for f in sorted((work/'frames').glob('*.png'))],[f'{i:06}.png' for i in range(45,90)])
 
     def test_isolation_rejects_a_window_crossing_a_registered_cut(self):
         self.create();p=Project.load(self.config);copied=self.root/'render-copy';shutil.copytree(self.source,copied)
         with self.assertRaisesRegex(ValueError,'complete native shot'):isolate_registered_body(p,copied,44,45)
+
+    def test_computed_cue_caches_do_not_stale_semantic_registration_but_seed_does(self):
+        self.meta['seed']=91230;dump(self.source/'film.meta',self.meta);self.create();before=self.config.read_bytes()
+        self.meta['timeEvents']=[{**event,'initialTime':0,'offset':1,'stack':'editor cache'} for event in reversed(self.meta['timeEvents'])]
+        dump(self.source/'film.meta',self.meta);validate_registration(Project.load(self.config));self.create()
+        self.assertEqual(self.config.read_bytes(),before)
+        self.meta['seed']=91231;dump(self.source/'film.meta',self.meta)
+        with self.assertRaisesRegex(ValueError,'stale'):validate_registration(Project.load(self.config))
+
+    def test_legacy_registration_keeps_raw_guard_until_explicit_refresh(self):
+        self.create();config=json.loads(self.config.read_text());receipt=config['motion_registration']
+        receipt.update(schemaVersion=1,cuesSha256=sha(self.source/'film.meta'));receipt.pop('cuesSemanticSha256');dump(self.config,config)
+        before=self.config.read_bytes();self.create();self.assertEqual(self.config.read_bytes(),before)
+        self.meta['timeEvents'][0]['stack']='computed cache';dump(self.source/'film.meta',self.meta)
+        with self.assertRaisesRegex(ValueError,'stale'):validate_registration(Project.load(self.config))
+        self.create(True);self.assertEqual(json.loads(self.config.read_text())['motion_registration']['schemaVersion'],2)
+
+    def test_initial_and_refresh_promotion_failure_restore_both_files(self):
+        replace=Path.replace
+        for initial in [True,False]:
+            with self.subTest(initial=initial):
+                if not initial:self.create()
+                before={file:file.read_bytes() for file in [self.config,self.derived] if file.exists()};failed=False
+                if not initial:self.meta['timeEvents'][0]['targetTime']=46/30;dump(self.source/'film.meta',self.meta)
+                def fail_config(path,destination):
+                    nonlocal failed
+                    if Path(destination)==self.config and path.name=='production.json' and not failed:failed=True;raise OSError('configuration replacement failed')
+                    return replace(path,destination)
+                with patch.object(Path,'replace',fail_config):
+                    with self.assertRaisesRegex(OSError,'configuration replacement'):self.create(not initial)
+                self.assertTrue(failed);self.assertEqual({file:file.read_bytes() for file in [self.config,self.derived] if file.exists()},before)
+
+    def named_run(self,name='complete'):
+        self.create();run=self.output/name;data=json.loads(self.config.read_text())
+        data.update(root=str(self.config.parent/'unit-9-motion'),output=str(run),delivery=str(run/'review.mp4'),handles=7,
+            timeline_file='my-edit.otio',verification={'profile':'generic','conform_first_frame_offset':0},owner_note='Keep this setting')
+        data['motion_registration'].update(schemaVersion=1,cuesSha256=sha(self.source/'film.meta'));data['motion_registration'].pop('cuesSemanticSha256')
+        file=run/'production.json';dump(file,data);return file
+
+    def refresh_run(self,file,refresh=True):
+        return register(self.legacy/'production.json',self.config,self.output,refresh,file)
+
+    def test_selected_refresh_preserves_custom_settings_and_unchanged_shared_edit(self):
+        selected=self.named_run();previous=selected.read_bytes();data=json.loads(previous)
+        default=json.loads(self.config.read_text());default.update(handles=5,owner_note='Keep default setting');dump(self.config,default)
+        unchanged=(self.derived.read_bytes(),self.derived.stat().st_mtime_ns)
+        self.assertEqual(self.refresh_run(selected),selected)
+        updated=json.loads(selected.read_text())
+        self.assertEqual({k:v for k,v in updated.items() if k not in ['motion_registration','motion_shots']},{k:v for k,v in data.items() if k not in ['motion_registration','motion_shots']})
+        self.assertEqual(updated['motion_registration']['schemaVersion'],2)
+        self.assertEqual((self.derived.read_bytes(),self.derived.stat().st_mtime_ns),unchanged)
+        self.assertEqual(json.loads(self.config.read_text())['owner_note'],'Keep default setting')
+        self.assertEqual(json.loads(self.config.read_text())['handles'],5)
+        saved=list((selected.parent/'.registration-history').glob('*.json'));self.assertEqual(len(saved),1);self.assertEqual(saved[0].read_bytes(),previous)
+        validate_registration(Project.load(selected));validate_registration(Project.load(self.config))
+        before={path:(path.read_bytes(),path.stat().st_mtime_ns) for path in [self.config,self.derived,selected,saved[0]]}
+        self.refresh_run(selected);self.assertEqual(before,{path:(path.read_bytes(),path.stat().st_mtime_ns) for path in before})
+
+    def test_selected_legacy_guard_requires_refresh_and_saved_cue_change_updates_both_windows(self):
+        selected=self.named_run();before=selected.read_bytes();self.refresh_run(selected,False)
+        self.assertEqual(selected.read_bytes(),before);self.assertEqual(json.loads(before)['motion_registration']['schemaVersion'],1)
+        self.meta['timeEvents'][0]['targetTime']=46/30;dump(self.source/'film.meta',self.meta)
+        with self.assertRaisesRegex(ValueError,'refresh'):self.refresh_run(selected,False)
+        self.refresh_run(selected)
+        for path in [self.config,selected]:
+            project=Project.load(path);validate_registration(project)
+            self.assertEqual(project.edit['scenes'][0]['end'],46);self.assertEqual(project.data['motion_shots']['02']['startFrame'],46)
+            self.assertEqual(project.data['motion_registration']['schemaVersion'],2)
+
+    def test_selected_promotion_failure_rolls_back_default_edit_selected_and_recovery_copy(self):
+        selected=self.named_run();before={path:path.read_bytes() for path in [self.config,self.derived,selected]}
+        self.meta['timeEvents'][0]['targetTime']=46/30;dump(self.source/'film.meta',self.meta)
+        replace=Path.replace;failed=False
+        def fail_selected(path,destination):
+            nonlocal failed
+            if Path(destination)==selected and path.name=='selected-production.json' and not failed:failed=True;raise OSError('selected replacement failed')
+            return replace(path,destination)
+        with patch.object(Path,'replace',fail_selected):
+            with self.assertRaisesRegex(OSError,'selected replacement'):self.refresh_run(selected)
+        self.assertTrue(failed);self.assertEqual(before,{path:path.read_bytes() for path in before})
+        self.assertFalse(list((selected.parent/'.registration-history').glob('*.json')))
+
+    def test_external_selected_setting_edit_during_planning_is_preserved(self):
+        selected=self.named_run();load=Project.load;changed=False;before=(self.config.read_bytes(),self.derived.read_bytes())
+        def owner_edit(path,*args,**kwargs):
+            nonlocal changed
+            if Path(path)==selected and not changed:
+                data=json.loads(selected.read_text());data['owner_note']='Owner changed this during refresh';dump(selected,data);changed=True
+            return load(path,*args,**kwargs)
+        with patch('sbph.motion_registration.Project.load',side_effect=owner_edit):
+            with self.assertRaisesRegex(RuntimeError,'inputs changed'):self.refresh_run(selected)
+        self.assertTrue(changed);self.assertEqual(json.loads(selected.read_text())['owner_note'],'Owner changed this during refresh')
+        self.assertEqual((self.config.read_bytes(),self.derived.read_bytes()),before)
+
+    def test_changed_shared_edit_refuses_busy_sibling_writer(self):
+        selected=self.named_run();sibling=self.named_run('other');before={path:path.read_bytes() for path in [self.config,self.derived,selected,sibling]}
+        self.meta['timeEvents'][0]['targetTime']=46/30;dump(self.source/'film.meta',self.meta)
+        # A disk lock represents a different process. This thread's own nested
+        # lock is intentionally reentrant and cannot model a competing writer.
+        lock=sibling.parent.parent/('.'+sibling.parent.name+'.sbph-build-lock');lock.mkdir();dump(lock/'owner.json',{'pid':99999,'command':'native render'})
+        with self.assertRaisesRegex(ValueError,'locked'):self.refresh_run(selected)
+        self.assertEqual(before,{path:path.read_bytes() for path in before});self.assertTrue(lock.exists())
+
+    def test_selected_alias_is_canonical_and_redirected_sibling_or_history_is_refused(self):
+        selected=self.named_run();alias=self.root/'toolkit-alias';alias.symlink_to(self.root,target_is_directory=True)
+        self.assertEqual(self.refresh_run(alias/selected.relative_to(self.root)),selected)
+        outside=self.root/'outside-run';outside.mkdir();sentinel=outside/'keep';sentinel.write_text('keep')
+        linked=self.output/'linked';linked.symlink_to(outside,target_is_directory=True);dump(outside/'production.json',{'owner':'keep'})
+        self.meta['timeEvents'][0]['targetTime']=46/30;dump(self.source/'film.meta',self.meta)
+        with self.assertRaisesRegex(ValueError,'Sibling native run'):self.refresh_run(selected)
+        self.assertFalse((outside.parent/('.'+outside.name+'.sbph-build-lock')).exists());linked.unlink()
+        history=selected.parent/'.registration-history';shutil.rmtree(history);history.symlink_to(outside,target_is_directory=True)
+        with self.assertRaisesRegex(ValueError,'recovery directory'):self.refresh_run(selected)
+        self.assertEqual(sentinel.read_text(),'keep');self.assertEqual(set(path.name for path in outside.iterdir()),{'production.json','keep'})
+
+    def test_cli_honors_saved_active_run_and_explicit_default_and_initial_default(self):
+        base=self.root/'toolkit';named=base/'output/unit-9-motion-handled/complete/production.json'
+        dump(named,{'renderer':'motion-canvas','root':str(base/'examples/unit-9-motion'),'output':str(named.parent)})
+        with patch('sbph.motion_registration.FRAMEWORK',base),patch('sbph.motion_registration.register') as registration:
+            with patch.object(sys,'argv',['motion-register','--refresh']),contextlib.redirect_stdout(io.StringIO()):main()
+            self.assertEqual(registration.call_args.args[-1],base/'examples/unit-9-motion.json')
+            select(base,'complete')
+            for flags,expected in [([],named),(['--run','default'],base/'examples/unit-9-motion.json'),(['--run','complete'],named)]:
+                with self.subTest(flags=flags),patch.object(sys,'argv',['motion-register','--refresh',*flags]),contextlib.redirect_stdout(io.StringIO()):main()
+                self.assertEqual(registration.call_args.args[-1],expected)
+
+    def test_registration_refuses_edit_parent_symlink_into_original_before_writes(self):
+        folder=self.config.parent/'unit-9-motion';folder.mkdir(parents=True)
+        (folder/'data').symlink_to(self.legacy/'data',target_is_directory=True);before=self.legacy_hashes()
+        with self.assertRaisesRegex(ValueError,'separate'):self.create(True)
+        self.assertFalse(self.config.exists());self.assertEqual(self.legacy_hashes(),before)
 
 
 if __name__=='__main__':unittest.main()

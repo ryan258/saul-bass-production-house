@@ -41,5 +41,32 @@ class MotionFilmContract(unittest.TestCase):
         self.meta['timeEvents'][-1]['targetTime']=89/30
         with self.assertRaisesRegex(ValueError,'original audio duration'):effective_plan(self.plan,self.meta)
 
+    def add_pulse(self,frame=33,end=40):
+        self.plan['scenes'][0]['pulses']=[{'frame':frame,'endFrame':end,'startEvent':'hit'}]
+        self.meta['timeEvents'].append({'name':'hit','targetTime':frame/30})
+
+    def test_saved_pulse_cue_keeps_duration_and_obeys_shot_boundary(self):
+        self.add_pulse();self.meta['timeEvents'][-1]['targetTime']=40/30
+        updated=effective_plan(self.plan,self.meta)
+        self.assertEqual((updated['scenes'][0]['pulses'][0]['frame'],updated['scenes'][0]['pulses'][0]['endFrame']),(40,47))
+        with self.assertRaisesRegex(ValueError,'Pulse crosses'):validate_plan(updated,self.meta)
+
+    def test_pulse_invalid_ranges_types_events_and_competing_signal_are_rejected(self):
+        self.add_pulse();validate_plan(self.plan,self.meta)
+        original=copy.deepcopy(self.plan)
+        for patch in [{'endFrame':33},{'endFrame':46},{'frame':True},{'startEvent':'missing'},{'signal':'head'}]:
+            with self.subTest(patch=patch):
+                self.plan=copy.deepcopy(original);self.plan['scenes'][0]['pulses'][0].update(patch)
+                with self.assertRaises(ValueError):validate_plan(self.plan,self.meta)
+        self.plan=copy.deepcopy(original);self.plan['scenes'][0]['animations'][0]['signal']='pulse'
+        self.plan['scenes'][0]['pulses'][0].update(frame=20,endFrame=25);self.meta['timeEvents'][-1]['targetTime']=20/30
+        with self.assertRaisesRegex(ValueError,'compete'):validate_plan(self.plan,self.meta)
+
+    def test_malformed_or_duplicate_saved_cues_fail_as_operator_errors(self):
+        for event in [None,{'name':'bad','targetTime':float('nan')},{'name':'bad','targetTime':True},self.meta['timeEvents'][0]]:
+            with self.subTest(event=event):
+                meta=copy.deepcopy(self.meta);meta['timeEvents'].append(event)
+                with self.assertRaises(ValueError):effective_plan(self.plan,meta)
+
 
 if __name__=='__main__':unittest.main()

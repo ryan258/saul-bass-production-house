@@ -8,47 +8,24 @@ case "$sbph_command" in
     export PYTHONPATH="$sbph_dir/src${PYTHONPATH:+:$PYTHONPATH}"
     exec "$sbph_dir/.venv/bin/python" -m sbph.motion_registration "$@"
     ;;
-  motion-status|motion-resume|motion-note|motion-notes|motion-resolve|motion-reanchor|motion-intent|motion-check|motion-shots|motion-validate|motion-timeline|motion-assemble|motion-package)
-    sbph_native_config="$sbph_dir/examples/unit-9-motion.json"
-    # A named run is explicit: the default rendering destination never changes.
-    # Keep --run first so the remaining arguments reach sbph without rewriting.
+  motion-use)
+    export PYTHONPATH="$sbph_dir/src${PYTHONPATH:+:$PYTHONPATH}"
+    exec "$sbph_dir/.venv/bin/python" -m sbph.unit9_run use "$sbph_dir" "$@"
+    ;;
+  motion-finish)
+    exec "$sbph_dir/scripts/unit9-finish.sh" "$@"
+    ;;
+  motion-status|motion-resume|motion-note|motion-notes|motion-resolve|motion-reanchor|motion-intent|motion-check|motion-shots|motion-validate|motion-timeline|motion-assemble|motion-package|motion-preflight|motion-evidence|motion-screen-record|motion-conform)
+    export PYTHONPATH="$sbph_dir/src${PYTHONPATH:+:$PYTHONPATH}"
     if [ "${1:-}" = --run ]; then
       if [ "$#" -lt 2 ]; then
         echo "unit9: --run needs an existing run name" >&2
         exit 1
       fi
-      sbph_run=$2
-      case "$sbph_run" in
-        ''|*[!a-zA-Z0-9_-]*)
-          echo "unit9: use a run name containing only letters, numbers, - or _" >&2
-          exit 1
-          ;;
-      esac
-      sbph_native_config=$("$sbph_dir/.venv/bin/python" - "$sbph_dir" "$sbph_run" <<'PY'
-import json
-from pathlib import Path
-import sys
-
-base=Path(sys.argv[1]).resolve()
-runs=base/'output/unit-9-motion-handled'
-run=runs/sys.argv[2]
-config=run/'production.json'
-try:
-    if run.resolve().parent!=runs.resolve() or config.resolve().parent!=run.resolve():
-        raise ValueError('Named run must remain inside output/unit-9-motion-handled')
-    if not config.is_file():raise ValueError('No production.json for run '+sys.argv[2])
-    data=json.loads(config.read_text())
-    root=(config.parent/data.get('root','.')).resolve()
-    output=(root/data.get('output','production')).resolve()
-    if data.get('renderer')!='motion-canvas' or root!=(base/'examples/unit-9-motion').resolve() or output!=run.resolve():
-        raise ValueError('Named run must be a native Unit 9 configuration whose output is its run folder')
-except (OSError,ValueError,AttributeError,TypeError) as error:
-    print('unit9: '+str(error),file=sys.stderr)
-    sys.exit(1)
-print(config)
-PY
-      )
+      sbph_native_config=$("$sbph_dir/.venv/bin/python" -m sbph.unit9_run config "$sbph_dir" "$2")
       shift 2
+    else
+      sbph_native_config=$("$sbph_dir/.venv/bin/python" -m sbph.unit9_run config "$sbph_dir")
     fi
     exec "$sbph_dir/sbph" "${sbph_command#motion-}" "$sbph_native_config" "$@"
     ;;

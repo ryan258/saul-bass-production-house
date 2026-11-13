@@ -33,7 +33,7 @@ class MotionProofPreservation(unittest.TestCase):
         self.spec={'sourceStartFrame':3,'sourceStartSample':4800,'frames':6,'sourceSamples':9600,
             'fps':30,'width':16,'height':16,'cuts':[0,6],'notes':'Fixture'}
         dump(self.scene/'proof.json',self.spec)
-        self.p=SimpleNamespace(root=self.root,output=self.output,audio=self.audio,
+        self.p=SimpleNamespace(root=self.root,output=self.output,audio=self.audio,driver=self.root/'driver.cjs',
             data={'motion_canvas':'scene/project.ts'},source_inventory=Mock(return_value=('current',[])),
             public_path=lambda path:Path('/published')/Path(path).relative_to(self.output))
         self.out=self.output/'motion-canvas';self.out.mkdir()
@@ -75,7 +75,7 @@ class MotionProofPreservation(unittest.TestCase):
     @contextlib.contextmanager
     def patched(self,**overrides):
         values={'verify_audio_window':lambda *args:'crop','validate_baseline':lambda *args:{'verified':True},
-            'browser_identity':lambda:{'fixture':'browser'},'subprocess.run':self.fake_run,
+            'browser_identity':lambda:{'fixture':'browser'},'run_native':self.fake_run,
             '_run_ffmpeg':self.fake_encode,'comparison':self.fake_comparison,
             'probe':self.fake_probe,'pcm':lambda file:b'identical decoded audio'}
         values.update(overrides)
@@ -104,7 +104,7 @@ class MotionProofPreservation(unittest.TestCase):
                 def compare(*args):
                     self.fake_comparison(*args)
                     if phase=='comparison':raise RuntimeError('comparison failure')
-                with self.patched(**{'subprocess.run':run,'_run_ffmpeg':encode,'comparison':compare}):
+                with self.patched(**{'run_native':run,'_run_ffmpeg':encode,'comparison':compare}):
                     with self.assertRaises((RuntimeError,subprocess.CalledProcessError)):motion.build(self.p)
                 self.assert_previous()
 
@@ -120,7 +120,7 @@ class MotionProofPreservation(unittest.TestCase):
                     if phase=='metadata':info['streams'][0]['width']=32
                     return info
                 def pcm(file):return b'different' if phase=='audio' and Path(file)!=self.baseline else b'identical decoded audio'
-                with self.patched(**{'subprocess.run':run,'probe':probe,'pcm':pcm}):
+                with self.patched(**{'run_native':run,'probe':probe,'pcm':pcm}):
                     with self.assertRaises(RuntimeError):motion.build(self.p)
                 self.assert_previous()
 
@@ -235,7 +235,7 @@ class MotionProofPreservation(unittest.TestCase):
                 ffmpeg.input(str(baseline)).audio,str(output),vcodec='libx264',pix_fmt='yuv420p',
                 acodec='copy',t=.2,**{'bsf:v':motion.BSF},**motion.COLOR)
             motion._run_ffmpeg(graph.global_args('-hide_banner','-loglevel','error'))
-        with patch('sbph.motion.subprocess.run',side_effect=run),patch('sbph.motion.browser_identity',return_value={'fixture':'browser'}),patch('sbph.motion.comparison',side_effect=comparison),contextlib.redirect_stdout(io.StringIO()):
+        with patch('sbph.motion.run_native',side_effect=run),patch('sbph.motion.browser_identity',return_value={'fixture':'browser'}),patch('sbph.motion.comparison',side_effect=comparison),contextlib.redirect_stdout(io.StringIO()):
             output=motion.build(self.p)
         record=json.loads((self.out/'proof.json').read_text())
         self.assertEqual(record['sha256'],sha(output));self.assertEqual(record['frames'],6)

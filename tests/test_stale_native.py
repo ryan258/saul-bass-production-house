@@ -104,7 +104,7 @@ class StaleEvidence(unittest.TestCase):
 class NativeLauncher(unittest.TestCase):
     def setUp(self):
         temporary=tempfile.TemporaryDirectory();self.addCleanup(temporary.cleanup)
-        self.root=Path(temporary.name)
+        self.root=Path(temporary.name).resolve()
         self.launcher=self.root/'unit9';shutil.copy2(FRAMEWORK/'unit9',self.launcher)
         python=self.root/'.venv/bin/python';python.parent.mkdir(parents=True);python.symlink_to(sys.executable)
         stub=self.root/'sbph'
