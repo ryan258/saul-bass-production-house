@@ -15,15 +15,32 @@ const config = fs.existsSync(proofFile) ? JSON.parse(fs.readFileSync(proofFile, 
 if (optionsArg) Object.assign(config,JSON.parse(optionsArg));
 process.env.SBPH_MOTION_PROJECT = project;
 if (outputArg) process.env.SBPH_MOTION_OUTPUT = path.resolve(outputArg);
-const server = await createServer({configFile: path.join(framework, 'motion-canvas/vite.config.ts'), server: {port: 9139}});
+const selectedPort=config.port ?? process.env.SBPH_MOTION_PORT;
+const port=selectedPort===undefined?(mode==='editor'?9139:0):Number(selectedPort);
+if(!Number.isInteger(port)||port<0||port>65535)throw Error('SBPH_MOTION_PORT or render port must be an integer from 0 to 65535');
+// Headless exports request an available loopback port. Editors try 9139 and
+// the next available port; an explicitly selected nonzero port is exact.
+const server = await createServer({configFile: path.join(framework, 'motion-canvas/vite.config.ts'), server: {port,strictPort:selectedPort!==undefined&&port!==0}});
 let browser;
+let interrupted;
+let finishEditor;
+const editorStopped=new Promise(resolve=>finishEditor=resolve);
+const signalHandlers=new Map(['SIGINT','SIGTERM','SIGHUP'].map(signal=>[signal,()=>{
+  interrupted=signal;finishEditor();
+  // Playwright also owns signal/exit cleanup for its detached browser group.
+  // Closing the browser releases pending page work so this launcher's finally
+  // can close Vite and return the signal's nonzero status.
+  if(browser)void browser.close().catch(()=>{});
+}]));
+for(const [signal,handler] of signalHandlers)process.on(signal,handler);
 try {
   await server.listen();
+  if(interrupted)throw Error('Native render interrupted before startup');
   const url = server.resolvedUrls.local[0];
   if (mode === 'editor') {
     console.log('Motion Canvas editor: ' + url);
     console.log('Audio is the exact source window. Stop with Ctrl-C.');
-    await new Promise(resolve => {process.once('SIGINT', resolve); process.once('SIGTERM', resolve);});
+    await editorStopped;
   } else {
     let executablePath = process.env.SBPH_CHROMIUM;
     if (!executablePath && !fs.existsSync(chromium.executablePath())) {
@@ -32,6 +49,7 @@ try {
       else throw Error('No Chromium found. Set SBPH_CHROMIUM; no browser is downloaded automatically.');
     }
     browser = await chromium.launch({executablePath, headless: true, args: ['--force-color-profile=srgb']});
+    if(interrupted)throw Error('Native render interrupted during browser startup');
     const page = await browser.newPage({viewport: {width: 1280, height: 720}});
     const pageErrors = [];
     const metaFrames = [];
@@ -80,7 +98,15 @@ try {
     console.log(JSON.stringify({...result, renderSeconds: (performance.now() - started) / 1000}));
     }
   }
+} catch(error) {
+  if(!interrupted)throw error;
 } finally {
-  if (browser) await browser.close();
-  await server.close();
+  let cleanupError;
+  try{if(browser)await browser.close();}catch(error){cleanupError=error;}
+  try{await server.close();}catch(error){cleanupError??=error;}
+  finally{
+    for(const [signal,handler] of signalHandlers)process.off(signal,handler);
+    if(interrupted)process.exitCode={SIGINT:130,SIGTERM:143,SIGHUP:129}[interrupted];
+  }
+  if(cleanupError&&!interrupted)throw cleanupError;
 }

@@ -25,7 +25,16 @@ export default defineConfig({
     dedupe: ['@motion-canvas/core', '@motion-canvas/2d', '@motion-canvas/ui', 'preact', '@preact/signals'],
   },
   optimizeDeps: {
-    include: ['@motion-canvas/core', '@motion-canvas/2d', '@motion-canvas/ui', '@motion-canvas/2d/editor', '@motion-canvas/ffmpeg/lib/client'],
+    // The 2D editor loads through a versioned /@id URL; keep it out of Vite's optimizer.
+    exclude: ['@motion-canvas/2d'],
+    include: [
+      '@motion-canvas/core', '@motion-canvas/ui', '@motion-canvas/ffmpeg/lib/client',
+      // CommonJS dependencies of the unbundled 2D components still need interop.
+      'parse-svg-path',
+      'mathjax-full/js/adaptors/liteAdaptor', 'mathjax-full/js/handlers/html',
+      'mathjax-full/js/input/tex', 'mathjax-full/js/input/tex/AllPackages',
+      'mathjax-full/js/mathjax', 'mathjax-full/js/output/svg',
+    ],
   },
-  server: {host: '127.0.0.1', strictPort: true, fs: {allow: [framework, path.dirname(project)]}},
+  server: {host: '127.0.0.1', strictPort: false, fs: {allow: [framework, path.dirname(project)]}},
 });
