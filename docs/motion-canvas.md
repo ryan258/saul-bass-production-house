@@ -91,3 +91,30 @@ Explicit Motion Canvas shot projects and full-project frame windows can now gene
 - [Official FFmpeg exporter](https://motioncanvas.io/docs/rendering/video/)
 - [Motion Canvas media nodes](https://motioncanvas.io/docs/media/)
 - [Motion Canvas source and license](https://github.com/motion-canvas/motion-canvas)
+
+## Current recovery and validation contract
+
+Full-film baseline audio is compared to the verified editor/source WAV before rendering, including duration, rate and channel format. Pulse cues must have valid positive contained intervals and must not compete for the same signal. Typechecking includes config-read diagnostics and verifies that the requested project was checked.
+
+`./unit9 motion-cache-status` is read-only receipt/hash evidence; it does not probe media or certify reusable sections. Use `./unit9 motion-film --repair-cache` only for deliberate recovery of a damaged receipt; its exact old bytes are retained as `chunks.damaged-*.json` before unverifiable sections are rebuilt.
+
+Registered cue identity now normalizes computed editor cache fields while retaining seed/custom metadata. Upgrade a legacy registration deliberately with `./unit9 motion-register --refresh` after reviewing saved cues. Registration follows the active named run or a first-option `--run NAME` override; `--run default` targets the default. A named refresh preserves its output/delivery settings and retains its prior config for recovery. The shared edit, default config, and selected config promote together with rollback; a shared timing change can stale other named runs.
+
+The renderer selects an available local port; the editor prefers 9139 and can select a nearby available port. `SBPH_MOTION_PORT` explicitly chooses a fixed port, which fails clearly if occupied. Native Node commands use isolated process groups and bounded cancellation cleanup; native browser/process behavior still requires current runtime acceptance.
+
+Exact first-cut and preceding source frames are retained in new full-film evidence. The known continuous-film first-frame lag remains a human review/source-scheduling issue; a timing audit or offset conform does not prove scene identity on the excluded first frames.
+
+## Editor dependency and compact-window checks
+
+The 2D editor extension uses versioned module URLs. The shared Vite configuration
+keeps the 2D ES modules outside dependency optimization and prebundles their
+CommonJS SVG-path and MathJax dependencies for browser interop. Run the focused
+regression with `node --test tests/test_motion_editor_dependencies.mjs`. It uses
+a synthetic project, isolated cache and temporary loopback listener; dotenv
+loading and source watching are disabled.
+
+At 1024px width, Motion Canvas 3.17.2 can clip the playback bar while its 400px
+sidebar is open. Click the active left-hand tab again (for example, Video Settings)
+to collapse the sidebar and show the full playback bar. Click a tab to reopen it.
+This control was checked with a synthetic scene; production font metrics and
+real media/editorial acceptance remain separate checks.

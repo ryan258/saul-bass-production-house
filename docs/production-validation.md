@@ -191,3 +191,11 @@ The manifest identifies the native renderer instead of requiring an SVG driver.
 Frame counts, handles, hashes, dimensions, and audio pass the same downstream
 gate. Default SVG builds retain their driver identity field. See
 [portable editorial workflow](portable-editorial.md).
+
+## Harmony source/output and recovery additions
+
+Source enumeration is shared by fingerprints and output protection. Broad globs omit generated output, temporary work and locks; a glob aimed directly at output is rejected. Use `source_files` for deliberate originals within an output tree: they remain protected from replacement. Generated shot filenames are checked for collisions, including case-insensitive portability. Relative `deliver_root` uses the film root, matching other project paths.
+
+A local writer lock protects each resolved output. Its sibling `.OUTPUT.sbph-build-lock/owner.json` records PID/command; other writers fail immediately. Nested same-thread production calls share ownership. There is no automatic stale-lock removal.
+
+`shots --repair-manifest` is explicit: malformed original bytes are retained under a unique `shots.damaged-*.json`, and unverifiable progress is rebuilt rather than adopted. Inspect `status`, the diagnostic path, and the original error before choosing recovery.

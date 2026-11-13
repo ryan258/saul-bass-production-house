@@ -29,9 +29,13 @@ identity prevents reuse; the option does not bless older clips. Plain `shots`
 still renders fresh selected shots. Candidates replace shared shot/proof/assembly
 outputs only after their checks, preserving prior files on handled failures.
 
-For native Unit 9, start with `./unit9 motion-status` or `motion-resume`. Add
-`--run full-run-ti36vxyf` immediately after either command to inspect the existing
-complete run; the default continues to refer to the partial native output.
+For native Unit 9, select the existing complete run once with
+`./unit9 motion-use full-run-ti36vxyf`, then use `motion-status` or `motion-resume`.
+`motion-use default` restores the partial default. `--run NAME` immediately after
+a native handled command overrides only that invocation. Selection never renders.
+`motion-register --refresh` also follows this selection and preserves the named
+run's output/delivery settings while refreshing its owned timing registration.
+See [current state](current-state.md) before rebuilding preserved media.
 
 | Changes the fingerprint (rebuild all) | Does not |
 |---|---|
@@ -63,7 +67,7 @@ All commands: `./sbph <command> /path/to/production.json [flags]`. `./signal` an
 
 | Stage | Command | Reads | Writes |
 |---|---|---|---|
-| Orient | `doctor` · `status` · `resume` | config, hashes | nothing (`resume --note/--shot/--text` saves a checkpoint) |
+| Orient | `doctor` · `preflight` · `evidence` · `status` · `resume` | config, hashes | nothing (`resume --note/--shot/--text` saves a checkpoint) |
 | Plan | `note` `notes` `resolve` `reanchor` `intent` | `.sbph/` | `.sbph/*.json` |
 | Preview | `animatic` · `revision` | edit, audio, driver | `output/drafts/` (unique, labeled) |
 | Measure | `analyze` | audio | `audio-cues.json` |
@@ -72,6 +76,7 @@ All commands: `./sbph <command> /path/to/production.json [flags]`. `./signal` an
 | Interchange | `timeline` · `package` | validated shots | `human-edit.otio` (+`.xml`), `handoffs/H…` |
 | Deliver | `assemble` → `check` → `conform` | validated shots | `assembly.mp4`, `media-verification.json`, `assembly-verification.json`, `review/` |
 | Return | `package-check` · `compare-return` | a handoff folder | nothing (optional `--out` report) |
+| Screen | `screen-record --screened --first-cuts-reviewed` | saved current delivery evidence | new explicit owner attestation under `evidence/` |
 | Resolve | `resolve-check` (Studio) · `resolve-record` (Free) | a handoff folder | `resolve-acceptance-<time>.json` in it |
 
 Add `--json` to workflow commands for scripts. `./sbph --help` lists every flag.
@@ -81,12 +86,12 @@ Add `--json` to workflow commands for scripts. `./sbph --help` lists every flag.
 | Command | Proves | Does not prove |
 |---|---|---|
 | `validate` | every shot is current; ranges, hashes, frame counts, size, source audio length | picture is good |
-| `check` | delivery size/rate/frames/color tags, 48 kHz stereo, audio correlation, full decode, contact sheets | human approval |
-| `conform` | assembly matches an **independent** reference at first/middle/last frame of every shot | the reference is right |
+| `check` | delivery size/rate/frames/color tags, 48 kHz stereo, audio correlation and per-channel levels/content, full decode, contact sheets | human approval |
+| `conform` | assembly matches a separate reference at recorded sampled frames; offset exclusions are measured and named | the reference is right |
 | `package-check` | folder is intact, relative, self-contained | the sender's identity |
 | `compare-return` | what an editor changed in OTIO terms | anything about the picture |
 
-Resolve/NLE import is **not** verified by any command. OTIO read/write and referenced media are.
+Timeline/package/media gates do not verify native editor import. `resolve-check` measures a real Studio import/export and gates the returned comparison; `resolve-record` stores explicit manual attestations. Neither establishes creative approval or device playback.
 
 ## Where to go next
 
@@ -103,3 +108,11 @@ Resolve/NLE import is **not** verified by any command. OTIO read/write and refer
 | What's left for v1.0 | [v1.md](v1.md) |
 | Project roadmap | [roadmap.md](../roadmap.md) |
 | Unit 9 specifics | [unit9-motion-handoff.md](unit9-motion-handoff.md), [current-state.md](current-state.md) |
+
+## Recovery and short acceptance steps
+
+`preflight` checks source/output paths and generated names without rendering or probing. Production writers use an exclusive local output lock; inspect its owner metadata before manually removing a lock left by a crashed process.
+
+Damaged saved manifests are preserved before deliberate recovery: `shots --repair-manifest --resume` and `motion-film --repair-cache`. `motion-cache-status` reads native receipt/hash evidence without a browser, probing, or a claim that reuse has passed.
+
+`status` now advances from current timeline/delivery/reference evidence toward screening, collected handoff, and Resolve. Saved evidence remains historical. `screen-record` requires both explicit viewing flags; it cannot establish that you watched a movie.

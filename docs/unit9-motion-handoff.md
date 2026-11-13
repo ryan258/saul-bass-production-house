@@ -1,5 +1,7 @@
 # Unit 9 native handled shots and portable handoff
 
+Current readiness is recorded in [current-state.md](current-state.md). The October 18 results below are historical; the harmony framework repairs stale existing shot builds. Select the complete run once with `./unit9 motion-use full-run-ti36vxyf`; `motion-use default` restores the partial default. An explicit `--run NAME` still overrides one invocation.
+
 Unit 9's existing native full-film project is registered in
 `examples/unit-9-motion.json`. Its effective edit snapshot lives in
 `examples/unit-9-motion/data/edit.json`. The registration resolves all 57 shot
@@ -7,7 +9,8 @@ windows from the full-film `edit.json` and saved `film.meta` cut cues. It retain
 7,194 body frames at 30 fps, 1920 × 1080, the original recording, and 12-frame
 handles at each edge.
 
-New media and packages go to **`output/unit-9-motion-handled/` in this toolkit**.
+New media and packages go to **`output/unit-9-motion-handled/` in this toolkit**,
+or the selected named run beneath that directory.
 That ignored directory is outside the original film tree. The legacy config,
 SVG shots, full native movie, proof, timelines, source project, and audio remain
 in their existing locations. The new configuration uses generic production
@@ -35,8 +38,10 @@ select an existing run's `production.json`. For the complete run described below
 ./unit9 motion-resume --run full-run-ti36vxyf
 ```
 
-This selection applies only to that invocation. It does not retarget default
-renders, refresh registration, or relabel media. Stale status and validation
+This selection applies only to that invocation. `motion-use NAME` saves a
+selection for later invocations. `motion-register` follows the same selection;
+only an explicit `--refresh` replaces an existing differing registration.
+Selection alone never refreshes registration or relabels media. Stale status and validation
 show the changed inventory files and browser/tool/settings fields. The shared
 framework still fingerprints all toolkit Python files, so these recovery changes
 invalidate older shot receipts. The saved handoff remains independently checkable.
@@ -75,7 +80,7 @@ After intentionally accepting the current source/toolchain for a new render,
 `./unit9 motion-shots --run full-run-ti36vxyf --resume` renders the required shots
 and can continue after interruption. It reuses only current records whose ranges,
 hashes, and probed media pass the shared gate. It will rerender the entire set if
-the build identity changed. Omitting `--run` targets the default partial output.
+the build identity changed. Omitting `--run` uses the explicitly saved active run, or the partial default when no run is selected.
 Plain `motion-shots` without `--resume` always requests fresh selected shots.
 
 `conform` additionally needs a separate `reference` movie in the configuration.
@@ -84,11 +89,11 @@ A complete render already exists (see below). To make a new one in the default
 output, run these explicitly:
 
 ```sh
-./unit9 motion-shots
-./unit9 motion-validate
-./unit9 motion-timeline
-./unit9 motion-assemble
-./unit9 motion-package
+./unit9 motion-shots --run default
+./unit9 motion-validate --run default
+./unit9 motion-timeline --run default
+./unit9 motion-assemble --run default
+./unit9 motion-package --run default
 ```
 
 The first command renders the complete film as separate handled shots. It has
@@ -112,8 +117,14 @@ After reviewing intended native cue changes:
 ./unit9 motion-register --refresh
 ```
 
-This updates only the owned registration config and edit snapshot. It preserves
-native sources and existing outputs and starts no render. Old shot records fail
+This follows the saved active run; `--run NAME` overrides it and `--run default`
+targets the default. A selected named run receives the refreshed registration
+and source-window mapping while retaining its other configuration, including
+root, output, and delivery. Refresh also keeps the default registration and shared
+edit snapshot together; other named runs can become stale when shared timing
+changes. The prior selected configuration is retained for recovery.
+
+It preserves native sources and existing media and starts no render. Old shot records fail
 the current fingerprint; rebuild the required complete shot set before export.
 Keep the original recording's duration and bytes. Audio replacement or shortened
 native timelines are rejected rather than silently registered.
@@ -137,6 +148,6 @@ visible operator frame is 3777; the isolated first body pose was compared with
 that frame. The middle and last body poses were compared at 3798 and 3819.
 Mean RGB errors at 480 × 270 were 0.704, 0.136, and 0.109 out of 255. Both held
 edges differ by less than 0.011 mean RGB levels after decoding. Sixteen focused
-registration/render contract tests passed. The full 57-shot run has now passed
+registration/render contract tests passed. The full 57-shot run historically passed
 timeline export, assembly, check, conform, and packaging; native editor import/export
 in Resolve remains the pending acceptance gate.

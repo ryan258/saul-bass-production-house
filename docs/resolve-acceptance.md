@@ -60,7 +60,7 @@ The toolkit never needs to run where Resolve runs. A handoff is a self-contained
 4. Copy `return.otio` back into the original handoff folder on the toolkit machine.
 5. There, run `resolve-record … --returned <handoff>/return.otio` (or just `compare-return`).
 
-Resolve on Windows writes absolute paths such as `file:///C:/Users/you/…/1-console.mp4`. `compare-return` relinks those by file name to the collected media (names are unique per shot), then hashes the real bytes, so the comparison is still measured, not assumed. A clip whose name matches nothing in the package stays `unverified_media`.
+Resolve on another machine can export absolute paths unavailable here. A unique basename permits a **presumed association** with collected media; it does not prove the bytes used by the remote editor. Such media remains `unverified_media` and comparison is incomplete. Return the actual media used, or explicitly relink/export against the verified collected files locally before measured acceptance. Merely copying the OTIO back cannot attest unavailable remote bytes.
 
 If Resolve Free shows clips as unplayable, tell me the codec message: the clips are 8-bit H.264 4:2:0, which Free on Windows normally decodes, but that is from memory, not tested here.
 
@@ -79,3 +79,11 @@ If Resolve Free shows clips as unplayable, tell me the codec message: the clips 
 | `media online` failed | source clips weren't found → relink to `media/`; the toolkit won't edit your OTIO |
 | `handle in-point` failed | Resolve normalised the source offset (e.g. start timecode) → file the exact numbers from `checks[]`; this is a signal, not noise |
 | return `needs_review` with `unverified_media` | export the OTIO into the handoff folder, or relink |
+
+## Acceptance gates and intended edits
+
+Scripted `resolve-check` must preserve measured media identity, enabled structure, supported timing, and original audio through export. Marker and track-label differences are warnings; other incomplete/failed return checks block success. Receipts bind the exact handoff manifest, timeline, and source fingerprint; failed/incomplete acceptance returns a nonzero process status.
+
+For a manual return containing intended supported picture edits, review `compare-return` and add `--accept-edits` to `resolve-record`. That flag attests your intent only; unavailable media, changed audio, disabled/unsupported structures, and incomplete comparisons still block measured acceptance. Without an exported return, a manual import attestation remains an import attestation and does not close the round-trip milestone.
+
+Exports and receipts use unique protected destinations. Keep the package, returned OTIO and actual media, acceptance JSON, and screening evidence together in a durable backup.

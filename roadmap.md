@@ -52,25 +52,26 @@ For the concrete delivery checklist and run orders, see the [v1.0 Checklist](doc
 - [x] Resumable chunk rendering and staged promotion safeguards.
 - [x] Non-destructive creative workflows: notes (`N1`), intent, animatics, and revision drafts.
 
-### Milestone 3: Road to v1.0 (In Progress)
-Tracked in detail in [docs/v1.md](docs/v1.md).
+### Milestone 3: Current-source acceptance (In Progress)
 
-- [x] **Test suite integrity**: Full Python suite passes (213 tests passing).
-- [x] **Unit 9 native full film proof**: 15s shutdown proof rendered and interruption-tested.
-- [x] **Unit 9 native full film assembly**: 7,194-frame 239.8s film rendered and checkpointed.
-- [x] **Unit 9 handled shots**: 57 native handled shots rendered and validated (`full-run-ti36vxyf`).
-- [x] **Native timeline & assembly validation**: Timeline with 33 accent/impact markers, assembly (7,194 frames), `check`, and `conform` (171 samples, max RGB error 0.286) passed.
-- [x] **Package verification**: Collected handoff built and verified with `package-check` (`handoffs/H615c266ae878`, 58 media files).
-- [ ] **DaVinci Resolve round-trip acceptance**: Import OTIO into real DaVinci Resolve, perform editorial cuts, export OTIO return, and run `resolve-check` / `compare-return`.
-- [ ] **Human screening**: Human editorial screening of delivered review assembly.
-- [ ] **v1.0.0 Release**: Version bump, tag, and publish documentation.
+The [current state](docs/current-state.md) is authoritative; the [repair ledger](docs/harmony.md) describes implemented corrections awaiting terminal verification.
+
+- [x] Historical October 18 suite result: 213 tests (not current-source verification).
+- [x] Historical native proof/full-film render, interruption, and resume acceptance.
+- [x] Historical 57-shot handled run, timeline, assembly, sampled conform and collected handoff.
+- [x] Source repairs for identity/evidence, validation, preservation, recovery, and shorter local resumption.
+- [x] Repaired-source regression suite passes completely (292 Python tests, 2 Node tests).
+- [ ] Intentional current-source native rebuild and focused runtime acceptance.
+- [ ] Exact first-cut review and complete human screening.
+- [ ] Real Resolve import, supported edit, OTIO return and package-bound acceptance.
+- [ ] Restored source/environment evidence and any explicitly authorized release.
 
 ---
 
 ## Post-v1.0 Roadmap
 
 ### Milestone 4: Granular Invalidation (v1.1)
-- **Targeted Fingerprinting**: Narrow fingerprint invalidation so changes in docs or non-rendering CLI commands do not invalidate existing shot caches.
+- **Targeted Fingerprinting**: Narrow invalidation of non-rendering framework code only after proving the omitted dependencies cannot affect output. Documentation already does not invalidate builds.
 - **Selective Re-renders**: Dependency graph tracing between scenes and shared assets to invalidate only affected shots.
 
 ### Milestone 5: Expanded NLE Support (v1.2)

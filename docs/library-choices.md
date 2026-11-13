@@ -13,7 +13,7 @@ Use established libraries for media mechanics, leaving custom code for artwork, 
 | Motion Canvas 3.17.2 | Installed animation backend | Native signals, easing and editable time events drive the Unit 9 shutdown proof. Official Renderer/ImageExporter supply frames; shared FFmpeg delivers the controlled A/B and, through explicit `motion_shots` registration, handled shots for the shared validation/OTIO path (Unit 9: see [handoff](unit9-motion-handoff.md)). |
 | Remotion | Alternative backend | Frame-based React composition and preview tools fit SVG and web-authored scenes. Not installed or integrated in this version. |
 
-Motion Canvas now supplies the bounded shutdown proof alongside the existing renderer. OTIO and Resolve retain editorial interchange. Remotion remains an uninstalled alternative; it is not another dependency in this production path.
+Motion Canvas supplies bounded proofs, resumable full-film rendering, and registered handled shots alongside the SVG renderer. OTIO and Resolve retain editorial interchange. Remotion remains an uninstalled alternative; it is not another dependency in this production path.
 
 ## Primary references checked on 2026-10-17
 

@@ -54,7 +54,7 @@ Name the lag explicitly rather than loosening the threshold:
 {"verification": {"conform_first_frame_offset": 1}}
 ```
 
-`conform` then compares each shot's frame `start + 1` instead of `start` (still inside the shot) and records `firstFrameOffset` in `assembly-verification.json`. Middle and last samples are unchanged. The Unit 9 native registration sets this to 1; the default is 0.
+`conform` then compares each shot's frame `start + 1` instead of `start` (still inside the shot) and records `firstFrameOffset` in `assembly-verification.json`. Middle and last samples are unchanged. The Unit 9 native registration sets this to 1; the default is 0. The actual excluded first frames are also decoded diagnostically. A mismatch produces `passed_with_exclusions`, `comparisonComplete: false`, and `firstFrameReviewRequired: true`. This does not correct the continuous reference or establish exact first-cut fidelity; inspect the diagnostics and movie before recording human review.
 
 ## Generic checks and reports
 
@@ -134,3 +134,9 @@ manifest still requires an intentional schema-2 rebuild before the production
 gate accepts it. If later using the external film's own configuration for a new
 build, add these explicit settings there deliberately; generic commands no
 longer infer them from its name.
+
+## Stereo and evidence preservation
+
+Audio checks retain 16 kHz duration/alignment evidence and add a 48 kHz explicit stereo-mix comparison: each active channel must correlate above 0.995 and retain RMS within 2 percent. Silent channels are checked separately. These are lossy tolerances, not bit-identical PCM or creative loudness acceptance. Nonintegral resampler window counts are recorded explicitly.
+
+Delivery contact sheets, configured reference samples, and their report are staged and promoted together. Obsolete managed review pages are removed transactionally; unrelated files in the review folder are preserved. Timeline/XML/report exports use the same grouped preservation policy.

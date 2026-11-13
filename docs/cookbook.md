@@ -103,7 +103,7 @@ sbph package production.json --out ~/handoffs/twodots-v1   # new folder only; ex
 sbph package-check ~/handoffs/twodots-v1                   # re-run anywhere, after any move
 ```
 ```
-Portable handoff valid: 3 media files; collected hashes and relative references passed.
+Portable handoff valid: 4 media files; collected hashes and relative references passed.
 ```
 
 The folder holds `edit.otio` (relative media refs), the handled clips, the original WAV, `editorial-context.json` (actions, events, notes, intent), `handoff.json` (hashes), and a README. Keep it together. Send the whole folder.
@@ -150,7 +150,7 @@ Each project folder needs `project.ts`, a scene, `tsconfig.json`, and `env.d.ts`
 ```sh
 sbph shots production.json --shot approach   # type-checks, then renders in headless Chromium; no downloads
 sbph validate production.json && sbph timeline production.json && sbph assemble production.json
-sbph motion-editor production.json --motion-project motion/approach/project.ts   # http://127.0.0.1:9139/, Ctrl-C to stop
+sbph motion-editor production.json --motion-project motion/approach/project.ts   # printed local URL; prefers 9139, Ctrl-C to stop
 ```
 
 Handles are edge-holds of the first and last body frame (they cannot reveal a neighbor). Needs Chromium or Chrome (`SBPH_CHROMIUM` to choose). The source folder is copied to a temp dir for each render, so Motion Canvas's `.meta` caching never edits your files. Sources must sit outside `output`. Details and limits: [portable-editorial.md](portable-editorial.md).
@@ -182,3 +182,15 @@ SBPH_HOME=/path/to/saul-bass-production-house ./make build        # examples/sig
 After moving a film, re-run `timeline`: OTIO files reference media by absolute path. A collected handoff, by contrast, uses relative paths and survives moving untouched.
 
 Environment overrides: `SBPH_FFMPEG`, `SBPH_FFPROBE`, `SBPH_NODE`, `SBPH_PYTHON` (setup), `SBPH_CHROMIUM`, `SBPH_NODE_MODULES`.
+
+## Resume the complete Unit 9 run with less typing
+
+```sh
+./unit9 motion-use full-run-ti36vxyf
+./unit9 motion-status
+./unit9 motion-preflight
+```
+
+Selection is explicit and local; neither status nor preflight renders. After a deliberate shot rebuild, `./unit9 motion-finish` runs the downstream gates and returns the exact package path. Use `motion-use default` to restore the partial output.
+
+After watching the full delivery and exact first cut frames, record your own screening with `motion-screen-record --screened --first-cuts-reviewed --text "Reviewed"`. `motion-evidence` lists saved evidence without implying current verification.

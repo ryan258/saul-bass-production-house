@@ -45,7 +45,7 @@ The environment is already prepared on this machine. From this folder:
 ./unit9 check
 ```
 
-`shots` renders every shot with handles. A bounded iteration can use `./unit9 shots --shot 10`; refresh all shots after changing shared artwork or scene code before exporting a complete timeline. Source inventories invalidate stale partial builds; the exporter rejects mixed versions. `timeline` creates the OTIO and XML handoff without rendering again. `assemble` builds a review movie from the editorial bodies, excluding handles. `conform` compares the assembly to an explicitly selected full-frame reference at the start, midpoint, and end of every shot. `check` verifies the selected delivery, audio alignment, handled media, and decoded all-shot contact sheets. Unit 9's extra creative checks use an explicit profile.
+`shots` renders every shot with handles. A bounded iteration can use `./unit9 shots --shot 10`; refresh all shots after changing shared artwork or scene code before exporting a complete timeline. Source inventories invalidate stale partial builds; the exporter rejects mixed versions. `timeline` creates the OTIO and XML handoff without rendering again. `assemble` builds a review movie from the editorial bodies, excluding handles. `conform` compares the assembly to an explicitly selected reference at recorded samples; offset first-frame exclusions are measured separately and remain pending human review when they differ. `check` verifies the selected delivery, audio alignment, handled media, and decoded all-shot contact sheets. Unit 9's extra creative checks use an explicit profile.
 
 Use `shots --resume` to continue an interrupted build. It reuses only clips whose
 current build identity, record, ranges, SHA-256, frame count, rate, and dimensions
@@ -83,7 +83,7 @@ or the assembled movie. It needs no pre-existing review files or geometry.
 refuses to compare the assembly with itself. See [generic verification and
 artifact roles](docs/generic-verification.md).
 
-`motion-proof` rebuilds the 15-second Unit 9 shutdown comparison. It produces the new 1080p movie, a labeled A/B movie, and verification records while preserving the original proof. `motion-editor` starts the local Motion Canvas editor at `http://127.0.0.1:9139/`; stop it with Ctrl-C. Both pictures use the same audio track. The new source is in the film's `motion-canvas/shutdown-proof-v01/` folder.
+`motion-proof` rebuilds the 15-second Unit 9 shutdown comparison. It produces the new 1080p movie, a labeled A/B movie, and verification records while preserving the original proof. `motion-editor` prints its local editor URL (preferring port 9139); stop it with Ctrl-C. Both pictures use the same audio track. The new source is in the film's `motion-canvas/shutdown-proof-v01/` folder.
 
 `motion-film` rebuilds the full 239.8-second Unit 9 film using native Motion Canvas scenes. It renders resumable 600-frame sections and retains hashed section media for recovery. `motion-film-editor` opens the full narration and action timing project. The full source is in `motion-canvas/full-film-v01/`; the movie and decoded review sheets are in `production/motion-canvas-full/`. The original SVG film and shutdown A/B remain available.
 
@@ -107,14 +107,16 @@ Native orientation is available with `./unit9 motion-status` and
 
 `--run NAME` must be the first option after the native command. It also works
 with `motion-shots`, `motion-validate`, `motion-check`, and the other native
-handoff/planning commands. It selects only that invocation; default commands
-continue to use their existing output folder. Status lists changed inventory
+handoff/planning commands. It selects only that invocation; commands without `--run` use the explicitly saved active run, or the partial default when none is selected. Status lists changed inventory
 files and browser/tool/settings fields without launching a browser or rendering.
 
 Unit 9's native project also has a separate handled-shot registration:
-`./unit9 motion-register` checks/creates its saved timing snapshot, and
-`./unit9 motion-shots --shot 31` renders one bounded shot to
-`output/unit-9-motion-handled/`. The original film tree stays intact. See
+`./unit9 motion-register` checks its saved timing snapshot for the selected run,
+or creates the default registration when no run is selected. Use
+`./unit9 motion-register --refresh` after reviewing saved timing changes;
+`--run default` explicitly targets the default registration. For one bounded
+default-output render, use `./unit9 motion-shots --run default --shot 31`.
+The original film tree stays intact. See
 [Unit 9 native handoff](docs/unit9-motion-handoff.md) for the complete workflow,
 refresh guard, and verification status (shot 31 in the default output; a
 complete 57-shot run in `output/unit-9-motion-handled/full-run-ti36vxyf/`
@@ -163,3 +165,11 @@ Python 3.11–3.13, Node, FFmpeg, ffprobe, and uv are required. `requirements.lo
 Setup uses a uv-managed Python 3.12 so `.venv` does not depend on another app's cache. Run the suite with `./scripts/test.sh`. Set `SBPH_PYTHON` to use a different interpreter. `SBPH_FFMPEG`, `SBPH_FFPROBE`, and `SBPH_NODE` override binary lookup. This Mac can use the existing bundled Node modules as a fallback; `npm ci` creates project-local modules on another machine.
 
 New here? Start with the [guide](docs/guide.md), the [roadmap](roadmap.md) (and [v1.0 checklist](docs/v1.md)), then [make your own film](docs/new-film.md), the [cookbook](docs/cookbook.md), and [troubleshooting](docs/troubleshooting.md). See also [the production path](docs/happy-path.md), [Resolve handoff](docs/resolve-handoff.md), [library choices and sources](docs/library-choices.md), and [current evidence](docs/current-state.md).
+
+## Current repair and acceptance status
+
+The October harmony repairs and registration workflows are implemented and verified against the full regression suite (292 tests passing). All existing shot builds are stale after framework edits. Start with [current state](docs/current-state.md) and the [repair ledger](docs/harmony.md), which supersede older historical status passages.
+
+Select the complete native run once with `./unit9 motion-use full-run-ti36vxyf`; use `motion-status`, `motion-preflight`, and `motion-evidence` to orient without rendering. `motion-use default` restores the partial default. After a deliberate shot rebuild, `motion-finish` completes timeline/assembly/check/conform/package gates without rendering shots.
+
+The retired root package snapshot is preserved in [history](docs/history/README.md). The unrelated SVG archive remains owner inventory and is not a toolkit dependency.

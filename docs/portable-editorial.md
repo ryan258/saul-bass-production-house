@@ -1,5 +1,7 @@
 # Motion shots, collected handoffs, and editor returns
 
+Current readiness is recorded in [current-state.md](current-state.md). The October 18 results below are historical; the harmony framework repairs stale existing shot builds. Select the complete run once with `./unit9 motion-use full-run-ti36vxyf`; `motion-use default` restores the partial default. An explicit `--run NAME` still overrides one invocation.
+
 The existing `shots → validate → timeline → assemble` path now supports explicit
 Motion Canvas shot bodies. `package` collects a validated shot set and original
 audio into a new folder. `compare-return` compares an editor's OTIO export with

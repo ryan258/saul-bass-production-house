@@ -11,7 +11,7 @@ Every failure is one line starting `sbph:` (exit 1). Find yours by its text. Mos
 | `No Chromium found` | Motion Canvas only → install Chrome/Chromium, or `SBPH_CHROMIUM=/path/to/binary`. Nothing is auto-downloaded |
 | `Cannot find module 'sharp'` | Node packages missing → `npm ci --ignore-scripts` (or set `SBPH_NODE_MODULES`) |
 | `Raster contract mismatch` | your SVG's `width`/`height` ≠ the edit's → make them equal |
-| `Port 9139 is already in use` | another `motion-editor` or render is running → stop it; the port is fixed |
+| Selected native port is in use | remove/change `SBPH_MOTION_PORT`; automatic rendering uses an available loopback port and the editor can try the next port |
 
 ## Edit and project errors
 
@@ -50,7 +50,7 @@ extra audio beyond codec-padding tolerance remains an error.
 
 Use `./unit9 motion-status --run full-run-ti36vxyf` to inspect the existing native
 complete run. `--run` must be first after the native command and names an existing
-native run folder. Omitting it retains the default partial output. No status or
+native run folder. Omitting it uses the saved `motion-use` selection, or the partial default when none is selected. No status or
 resume command launches a browser or begins rendering.
 
 ## Verification errors
@@ -86,3 +86,12 @@ sbph status production.json                          # build state + next action
 sbph status production.json --json | python3 -m json.tool | less    # full detail incl. errors[]
 sbph validate production.json                        # the exact reason a build is rejected
 ```
+
+## Explicit recovery and acceptance
+
+- `Output is locked`: inspect the reported sibling lock's `owner.json` and PID. Wait for the owner; remove only that lock manually after confirming the owner is gone. The toolkit never steals it automatically.
+- Damaged `shots.json`: inspect it, then choose `shots --repair-manifest --resume`. Exact damaged bytes are retained under a unique name.
+- Damaged `chunks.json`: use `motion-cache-status`, then deliberate `motion-film --repair-cache`. Hash-only status does not establish media reuse.
+- Return `unverified_media`: a basename matched an original package file but the returned bytes are unavailable. Provide/relink the actual media; a filename is not proof of identity.
+- Return has supported intentional edits: inspect the comparison, then add `--accept-edits` to manual `resolve-record`. It never waives changed audio, unavailable media, or unsupported structure.
+- `passed_with_exclusions`: sampled conform succeeded but exact excluded first frames differ. Inspect the cut evidence; complete screening and first-cut review remain pending.
