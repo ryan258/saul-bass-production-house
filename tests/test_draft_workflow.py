@@ -86,7 +86,7 @@ class DraftWorkflow(unittest.TestCase):
             candidate.write_bytes(b'not encoded')
             flow.set_intent(p,'bridge',{'goal':'Changed during rendering'})
         video={'codec_type':'video','nb_frames':'96','avg_frame_rate':'24/1','width':320,'height':232}
-        with patch('sbph.drafts.encode',side_effect=changed),patch('sbph.drafts.probe',return_value={'streams':[video]}),patch('sbph.verify.audio_comparison',return_value={}),patch('sbph.drafts.ffmpeg.run'):
+        with patch('sbph.drafts.encode',side_effect=changed),patch('sbph.drafts.probe',return_value={'streams':[video]}),patch('sbph.verify.audio_comparison',return_value={}),patch('sbph.drafts._run_ffmpeg'):
             with self.assertRaisesRegex(RuntimeError,'inputs changed'):render(self.p,animatic_parameters(self.p,width=320))
         self.assertFalse(list((self.p.output/'drafts').glob('*.mp4')))
         self.assertFalse(flow.state_path(self.p,'artifacts').exists());self.unchanged()

@@ -1,8 +1,9 @@
 from pathlib import Path
 import ffmpeg
-from .media import render_picture,COLOR,BSF,_run_ffmpeg,_validate_video,_promote_files,_candidate_directory,_protect_output_inputs
+from .media import render_picture,COLOR,BSF,_run_ffmpeg,_validate_video,_promote_files,_candidate_directory,_protect_output_inputs,locked_output
 from .project import binary,dump,sha
 
+@locked_output
 def preview(p,start_seconds=None,duration_seconds=None):
     from .validation import validate_edit,validate_source_audio
     from .fingerprint import BUILD_SCHEMA

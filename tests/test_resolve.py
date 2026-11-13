@@ -19,12 +19,17 @@ class FakeItem:
 
 
 class FakeTimeline:
-    def __init__(self,exp,folder):self.exp,self.folder=exp,folder
+    def __init__(self,exp,folder):self.exp,self.folder,self.change=exp,folder,None
     def GetStartFrame(self):return 86400
-    def GetItemListInTrack(self,kind,number):return [FakeItem(r,86400,self.folder) for r in self.exp[kind]]
+    def GetTrackCount(self,kind):return self.exp['trackCounts'][kind]
+    def GetItemListInTrack(self,kind,number):return [FakeItem(r,86400,self.folder) for r in self.exp[kind]] if number==1 else []
     def GetSetting(self,key):return str(float(self.exp['fps']))
     def GetMarkers(self):return {frame:{} for frame in self.exp['markers']}
-    def Export(self,path,kind):shutil.copy2(self.folder/'edit.otio',path);return True
+    def Export(self,path,kind):
+        tl=otio.adapters.read_from_file(str(self.folder/'edit.otio'))
+        for clip in tl.find_clips():clip.media_reference.target_url=(self.folder/clip.media_reference.target_url).as_uri()
+        if self.change:self.change(tl)
+        otio.adapters.write_to_file(tl,path);return True
 
 
 class FakeResolve:
@@ -53,7 +58,7 @@ class ResolveAcceptance(unittest.TestCase):
 
     def facts(self):
         timeline=FakeTimeline(self.exp,self.folder)
-        return {'fps':float(self.exp['fps']),'markers':sorted(self.exp['markers']),
+        return {'fps':float(self.exp['fps']),'markers':sorted(self.exp['markers']),'trackCounts':self.exp['trackCounts'].copy(),
             'video':[{'name':r['name'],'start':r['start'],'duration':r['duration'],'leftOffset':r['sourceStart'],'path':str(self.folder/r['file'])} for r in self.exp['video']],
             'audio':[{'name':r['name'],'start':r['start'],'duration':r['duration'],'leftOffset':r['sourceStart'],'path':str(self.folder/r['file'])} for r in self.exp['audio']]}
 
@@ -91,13 +96,87 @@ class ResolveAcceptance(unittest.TestCase):
         report=resolve.record(self.folder,'19.1 Free',dict.fromkeys(resolve.ATTESTATIONS,True),self.folder/'return.otio','looked right')
         self.assertEqual(report['status'],'attested');self.assertEqual(report['exportedReturn']['status'],'unchanged')
 
-    def test_windows_absolute_paths_in_a_return_are_relinked_by_name(self):
+    def test_windows_absolute_paths_are_only_presumed_associations(self):
         _,tl=check_package(self.folder)
         for clip in tl.find_clips():clip.media_reference.target_url='file:///C:/Users/me/Resolve%20Media/'+clip.media_reference.target_url.rsplit('/',1)[-1]
         otio.adapters.write_to_file(tl,str(self.folder/'return.otio'))
         from sbph.editor_return import compare
         report=compare(self.folder,self.folder/'return.otio')
-        self.assertEqual(report['status'],'unchanged',report['issues']);self.assertTrue(report['comparisonComplete'])
+        self.assertEqual(report['status'],'needs_review');self.assertFalse(report['comparisonComplete']);self.assertFalse(report['originalAudioPreserved'])
+        self.assertTrue(all(not r['mediaVerified'] and r['presumedCollectedMedia'] for r in report['returnedClips']))
+        self.assertTrue(all(i['kind']=='unverified_media' for i in report['issues']))
+
+    def test_imported_media_bytes_all_track_counts_and_audio_inpoint_are_checked(self):
+        replacement=self.folder/'different.wav';replacement.write_bytes(b'wrong original recording')
+        for change,check in [(lambda f:f['audio'][0].update(path=str(replacement)),'media identity'),
+                (lambda f:f['audio'][0].update(leftOffset=1),'source in-point'),
+                (lambda f:f['trackCounts'].update(video=2),'video track count'),
+                (lambda f:f['trackCounts'].update(audio=2),'audio track count')]:
+            with self.subTest(check=check):
+                facts=self.facts();change(facts)
+                self.assertTrue(any(check in r['check'] and r['status']=='failed' for r in resolve.evaluate(facts,self.exp)))
+
+    def test_material_or_unverifiable_exports_fail_scripted_acceptance(self):
+        def slip(tl):
+            clip=tl.video_tracks()[0][0];clip.source_range=otio.opentime.TimeRange(otio.opentime.RationalTime(1,self.exp['fps']),clip.source_range.duration)
+        def missing(tl):tl.audio_tracks()[0][0].media_reference.target_url='file:///unavailable/original.wav'
+        def root_disabled(tl):tl.tracks.enabled=False
+        def audio_effect(tl):tl.audio_tracks()[0][0].effects.append(otio.schema.Effect(name='gain'))
+        def extra_track(tl):tl.tracks.append(otio.schema.Track(kind=otio.schema.TrackKind.Audio))
+        for change in [slip,missing,root_disabled,audio_effect,extra_track]:
+            with self.subTest(change=change.__name__):
+                fake=FakeResolve(self.exp,self.folder);fake.timeline.change=change
+                with patch('sbph.resolve.connect',return_value=fake):report=resolve.check(self.folder)
+                self.assertEqual(report['status'],'failed',report)
+                self.assertTrue(any(r['check']=='exported return' and r['status']=='failed' for r in report['checks']))
+
+    def test_marker_only_export_changes_warn_and_preserve_acceptance(self):
+        fake=FakeResolve(self.exp,self.folder)
+        def markers(tl):tl.video_tracks()[0].markers.append(otio.schema.Marker(name='editor marker'))
+        fake.timeline.change=markers
+        with patch('sbph.resolve.connect',return_value=fake):report=resolve.check(self.folder)
+        self.assertEqual(report['status'],'passed');self.assertEqual(report['exportedReturn']['materialChanges'],0)
+        self.assertTrue(any(r['status']=='warning' for r in report['checks']))
+
+    def test_export_failures_and_malformed_export_never_pass(self):
+        for exported in [False,True]:
+            fake=FakeResolve(self.exp,self.folder)
+            with patch.object(fake.timeline,'Export',return_value=exported),patch('sbph.resolve.connect',return_value=fake):report=resolve.check(self.folder)
+            self.assertEqual(report['status'],'failed')
+        fake=FakeResolve(self.exp,self.folder)
+        with patch.object(fake.timeline,'Export',side_effect=RuntimeError('export refused')),patch('sbph.resolve.connect',return_value=fake):report=resolve.check(self.folder)
+        self.assertEqual(report['status'],'failed');self.assertTrue(any(r['detail']=='export refused' for r in report['checks']))
+
+    def test_manual_failed_comparison_overrides_full_attestation(self):
+        _,tl=check_package(self.folder);tl.tracks.enabled=False
+        file=self.folder/'disabled.otio';otio.adapters.write_to_file(tl,str(file))
+        report=resolve.record(self.folder,'19.1 Free',dict.fromkeys(resolve.ATTESTATIONS,True),file)
+        self.assertEqual(report['status'],'failed');self.assertFalse(report['exportedReturn']['originalAudioPreserved'])
+
+    def test_manual_editorial_changes_need_explicit_acceptance_and_verified_audio(self):
+        _,tl=check_package(self.folder);clip=tl.video_tracks()[0][0]
+        clip.source_range=otio.opentime.TimeRange(otio.opentime.RationalTime(1,self.exp['fps']),clip.source_range.duration)
+        file=self.folder/'edited.otio';otio.adapters.write_to_file(tl,str(file));confirmed=dict.fromkeys(resolve.ATTESTATIONS,True)
+        self.assertEqual(resolve.record(self.folder,'19.1 Free',confirmed,file)['status'],'failed')
+        report=resolve.record(self.folder,'19.1 Free',confirmed,file,accept_edits=True)
+        self.assertEqual(report['status'],'attested');self.assertTrue(report['acceptedEditorialChanges'])
+        tl.audio_tracks()[0][0].effects.append(otio.schema.Effect(name='gain'));otio.adapters.write_to_file(tl,str(file))
+        self.assertEqual(resolve.record(self.folder,'19.1 Free',confirmed,file,accept_edits=True)['status'],'failed')
+
+    def test_acceptance_records_and_exports_are_unique_and_bound_to_package(self):
+        with patch('sbph.resolve.stamp',return_value='same-second'),patch('sbph.resolve.connect',return_value=FakeResolve(self.exp,self.folder)):
+            first=resolve.check(self.folder);second=resolve.check(self.folder)
+        self.assertNotEqual(first['file'],second['file']);self.assertNotEqual(first['exportedReturn']['file'],second['exportedReturn']['file'])
+        self.assertEqual(first['packageIdentity'],resolve.package_identity(self.folder))
+        self.assertEqual(first['exportedReturn']['baselineManifestSha256'],first['packageIdentity']['handoffSha256'])
+
+    def test_exclusive_receipt_creation_never_replaces_an_existing_record(self):
+        from types import SimpleNamespace
+        with patch('sbph.resolve.stamp',return_value='same-second'),patch('sbph.resolve.uuid.uuid4',return_value=SimpleNamespace(hex='a'*32)):
+            first=resolve.write(self.folder,{'status':'original'})
+            with self.assertRaises(FileExistsError):resolve.write(self.folder,{'status':'replacement'})
+        import json
+        self.assertEqual(json.loads(Path(first['file']).read_text())['status'],'original')
 
     def test_manual_record_requires_a_version(self):
         with self.assertRaisesRegex(ValueError,'edition and version'):resolve.record(self.folder,None,{})

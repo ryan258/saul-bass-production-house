@@ -2,9 +2,10 @@
 from pathlib import Path, PurePosixPath
 from collections import Counter
 from urllib.parse import quote, unquote, urlsplit
-import json, shutil, uuid
+import json, math, shutil, uuid
 import opentimelineio as otio
 from .project import dump, sha
+from .media import locked_output, _protect_output_inputs
 
 
 def member(root,name):
@@ -18,9 +19,11 @@ def member(root,name):
 
 
 def check_package(folder):
-    root=Path(folder).resolve();manifest=json.loads((root/'handoff.json').read_text())
+    from .project import read_object
+    root=Path(folder).resolve();manifest=read_object(root/'handoff.json','Handoff manifest');manifest_hash=sha(root/'handoff.json')
     if not isinstance(manifest,dict) or manifest.get('schemaVersion')!=1:raise ValueError('Unsupported handoff package schema')
     if any(type(manifest.get(k)) is not int or manifest[k]<=0 for k in ['fps','frames']):raise ValueError('Package requires positive integer fps and frames')
+    if not isinstance(manifest.get('sourceFingerprint'),str) or len(manifest['sourceFingerprint'])!=64 or any(c not in '0123456789abcdef' for c in manifest['sourceFingerprint']):raise ValueError('Package requires a valid source fingerprint')
     files=manifest.get('files')
     if not isinstance(files,dict) or not files:raise ValueError('Package has no file inventory')
     for name,expected in files.items():
@@ -38,6 +41,8 @@ def check_package(folder):
     if not media or len(media)!=len(list(tl.find_clips())):raise ValueError('Package media inventory differs from timeline')
     known={row['file']:row for row in media}
     if any(row['kind']=='Video' and (not isinstance(row.get('shotId'),str) or not row['shotId']) for row in media):raise ValueError('Video media requires a shot identity')
+    shots=[row['shotId'] for row in media if row['kind']=='Video']
+    if len(set(shots))!=len(shots):raise ValueError('Package video shot identities must be unique')
     if len(known)!=len(media):raise ValueError('Duplicate package media reference')
     seen=[]
     for clip in tl.find_clips():
@@ -54,15 +59,52 @@ def check_package(folder):
         if not hasattr(meta,'get') or meta.get('media_sha256')!=row['sha256']:raise ValueError('Package clip identity differs from media')
         if row.get('shotId')!=meta.get('shot_id'):raise ValueError('Package shot identity differs from media')
     if Counter(seen)!=Counter(known.keys()):raise ValueError('Package must reference each collected media file exactly once')
+    _validate_baseline(tl,manifest)
+    if sha(root/'handoff.json')!=manifest_hash:raise ValueError('Handoff manifest changed during inspection; retry')
     return manifest,tl
 
 
+def _validate_baseline(tl,manifest):
+    """Only the enabled, two-track, frame-aligned export is a valid baseline."""
+    fps=manifest['fps'];total=manifest['frames'];known={r['file']:r for r in manifest['media']}
+    metadata=tl.metadata.get('sbph',{})
+    if not hasattr(metadata,'get') or metadata.get('sourceFingerprint')!=manifest['sourceFingerprint'] or metadata.get('fps')!=fps or metadata.get('duration_frames')!=total:
+        raise ValueError('Package baseline provenance differs from its manifest')
+    def frame(value):
+        n=value.rescaled_to(fps).value
+        if not math.isfinite(n) or abs(n-round(n))>1e-6:raise ValueError('Package timeline times must be finite baseline frames')
+        return round(n)
+    if tl.global_start_time is not None and (tl.global_start_time.rate!=fps or frame(tl.global_start_time)!=0):raise ValueError('Package baseline must start at frame zero at its declared rate')
+    if not tl.tracks.enabled or tl.tracks.source_range is not None or tl.tracks.effects:raise ValueError('Package baseline stack must be enabled without trims or effects')
+    if len(tl.tracks)!=2 or any(not isinstance(t,otio.schema.Track) for t in tl.tracks) or [t.kind for t in tl.tracks]!=['Video','Audio']:
+        raise ValueError('Package baseline requires one video track followed by one audio track')
+    for track in tl.tracks:
+        if not track.enabled or track.source_range is not None or track.effects:raise ValueError('Package baseline tracks must be enabled without trims or effects')
+        if not track or (track.kind=='Audio' and len(track)!=1):raise ValueError('Package baseline requires video clips and one original audio clip')
+        position=0
+        for clip in track:
+            if not isinstance(clip,otio.schema.Clip) or not clip.enabled or clip.effects:raise ValueError('Package baseline requires enabled clips without gaps, transitions, or effects')
+            row=known[unquote(clip.media_reference.target_url)]
+            if row['kind']!=track.kind:raise ValueError('Package media kind differs from its baseline track')
+            source=clip.trimmed_range();placed=clip.range_in_parent();available=clip.media_reference.available_range
+            if any(t.rate!=fps for t in [source.start_time,source.duration,placed.start_time,placed.duration]):raise ValueError('Package baseline times differ from its declared frame rate')
+            start=frame(source.start_time);duration=frame(source.duration)
+            if duration<=0 or frame(placed.start_time)!=position or frame(placed.duration)!=duration:raise ValueError('Package baseline must contain contiguous positive clip ranges')
+            if available is None or frame(available.start_time)!=0 or frame(available.duration)!=row['availableFrames']:raise ValueError('Package available range differs from its media inventory')
+            if track.kind=='Audio' and (start!=0 or duration!=total or row['availableFrames']!=total):raise ValueError('Package baseline audio must preserve the complete editorial window')
+            position+=duration
+        if position!=total:raise ValueError('Package baseline track duration differs from its frame count')
+    if frame(tl.duration())!=total:raise ValueError('Package baseline timeline duration differs from its frame count')
+
+
+@locked_output
 def package(p,destination=None):
     from .validation import validate_shot_set,audio_cues,story_events
     from .timeline import build_model
     from .workflow import notes,shot_intent
     records=validate_shot_set(p);tl=build_model(p,records,audio_cues(p))
     dest=Path(destination).resolve() if destination else p.output/'handoffs'/('H'+uuid.uuid4().hex[:12])
+    _protect_output_inputs(p,[dest])
     if dest.exists():raise ValueError('Handoff destination already exists; choose a new folder')
     # Complete the source gates before creating anything in the destination.
     dest.parent.mkdir(parents=True,exist_ok=True);dest.mkdir()

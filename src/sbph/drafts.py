@@ -12,7 +12,7 @@ from PIL import Image,ImageDraw,ImageFont,__version__ as pillow_version
 
 from .project import FRAMEWORK,Project,binary,dump,sha
 from .fingerprint import digest,tool_identity
-from .media import COLOR,BSF,probe
+from .media import COLOR,BSF,probe,locked_output,_candidate_directory,_promote_files,_run_ffmpeg
 from .validation import validate_edit,validate_source_audio
 from . import workflow as flow
 
@@ -174,6 +174,7 @@ def encode(p,params,candidate,work,cards):
                     except subprocess.TimeoutExpired:process.kill();process.wait()
 
 
+@locked_output
 def render(p,params):
     validate_edit(p);validate_source_audio(p)
     if params.get('noteId') and flow.find_note(p,params['noteId'])['anchor']!=params.get('noteAnchor'):
@@ -183,7 +184,7 @@ def render(p,params):
     identifier=('A' if params['kind']=='animatic' else 'R')+uuid.uuid4().hex[:12]
     final=folder/(identifier+'.mp4');sidecar=final.with_suffix('.json')
     if final.exists() or sidecar.exists():raise ValueError('Draft filename collision; retry')
-    with tempfile.TemporaryDirectory(prefix='draft-work-',dir=folder) as temporary:
+    with _candidate_directory(prefix='.draft-work-',dir=folder) as temporary:
         work=Path(temporary);candidate=work/'candidate.mp4';cards=None;sections=[]
         if params['kind']=='animatic':cards,sections=make_cards(p,params,work)
         encode(p,params,candidate,work,cards)
@@ -193,7 +194,7 @@ def render(p,params):
         from .verify import audio_comparison
         expected=work/'audio-window.wav'
         stream=ffmpeg.input(str(p.audio)).audio.filter('atrim',start=params['start']/p.fps,end=(params['start']+params['frames'])/p.fps).filter('asetpts','PTS-STARTPTS')
-        ffmpeg.run(ffmpeg.output(stream,str(expected),acodec='pcm_s16le'),cmd=binary('ffmpeg'),overwrite_output=True,quiet=True)
+        _run_ffmpeg(ffmpeg.output(stream,str(expected),acodec='pcm_s16le').global_args('-hide_banner','-loglevel','error'))
         audio=audio_comparison(expected,candidate)
         if digest(basis(p,params))!=fingerprint:raise RuntimeError('Draft inputs changed during rendering; output was not promoted')
         record={'schemaVersion':1,'id':identifier,'kind':params['kind'],'draft':True,'createdAt':flow.now(),
@@ -201,12 +202,16 @@ def render(p,params):
             'file':flow.relative_path(p,final),'sha256':sha(candidate),'parameters':params,'sourceFingerprint':fingerprint,
             'inputs':inputs,'fps':p.fps,'frames':params['frames'],'duration':params['frames']/p.fps,'sections':sections,'audio':audio,
             'limit':'Draft review material, not a production delivery, approved baseline, or editorial acceptance.'}
-        candidate.replace(final);dump(sidecar,record)
+        staged=work/'draft.json';dump(staged,record)
+        if digest(basis(p,params))!=fingerprint:raise RuntimeError('Draft inputs changed before promotion')
+        _promote_files([(candidate,final),(staged,sidecar)],work)
     flow.register_artifact(p,{key:record[key] for key in ['id','kind','createdAt','file','sha256','parameters','sourceFingerprint']})
     return record
 
 
 def artifact_status(p,row):
+    if not isinstance(row,dict) or any(key not in row for key in ['file','sha256','parameters','sourceFingerprint']):raise ValueError('Malformed saved draft record')
+    if not isinstance(row['file'],str) or not isinstance(row['parameters'],dict):raise ValueError('Malformed saved draft file or parameters')
     file=p.root/row['file']
     if not file.is_file():return {**row,'status':'missing'}
     if sha(file)!=row['sha256']:return {**row,'status':'changed'}

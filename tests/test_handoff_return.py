@@ -150,5 +150,48 @@ class HandoffReturn(unittest.TestCase):
         report=compare(self.folder,self.returned(edit))
         self.assertFalse(report['comparisonComplete']);self.assertEqual(report['status'],'needs_review')
 
+    def test_disabled_root_stack_is_a_material_change_and_never_preserves_audio(self):
+        self.collect()
+        def disabled(tl):tl.tracks.enabled=False
+        report=compare(self.folder,self.returned(disabled))
+        self.assertEqual(report['status'],'needs_review');self.assertFalse(report['originalAudioPreserved'])
+        self.assertTrue(any(c['type']=='stack_enabled' for c in report['changes']))
+        self.assertTrue(any(i['kind']=='disabled' and i['where']=='timeline' for i in report['issues']))
+
+    def test_basename_association_never_verifies_unavailable_returned_bytes(self):
+        self.collect()
+        def remote(tl):
+            for clip in tl.find_clips():clip.media_reference.target_url='file:///another/computer/'+Path(clip.media_reference.target_url).name
+        report=compare(self.folder,self.returned(remote))
+        self.assertFalse(report['comparisonComplete']);self.assertFalse(report['originalAudioPreserved'])
+        self.assertTrue(all(r['mediaSha256'] is None and r['presumedCollectedMedia'] for r in report['returnedClips']))
+        self.assertEqual({i['kind'] for i in report['issues']},{'unverified_media'})
+
+    def test_invalid_baseline_structure_fails_even_when_inventory_hashes_match(self):
+        self.collect();manifest,original=check_package(self.folder)
+        def disabled(tl):tl.tracks.enabled=False
+        def audio_trim(tl):tl.audio_tracks()[0][0].source_range=TR(RT(1,30),RT(5,30))
+        def effects(tl):tl.video_tracks()[0].effects.append(otio.schema.Effect(name='effect'))
+        def extra(tl):tl.tracks.append(otio.schema.Track(kind='Audio'))
+        def gap(tl):tl.video_tracks()[0].insert(0,otio.schema.Gap(source_range=TR(RT(0,30),RT(1,30))))
+        def provenance(tl):tl.metadata['sbph']['sourceFingerprint']='0'*64
+        for edit in [disabled,audio_trim,effects,extra,gap,provenance]:
+            with self.subTest(edit=edit.__name__):
+                tl=original.deepcopy();edit(tl);otio.adapters.write_to_file(tl,str(self.folder/'edit.otio'))
+                changed=json.loads(json.dumps(manifest));changed['files']['edit.otio']=sha(self.folder/'edit.otio');dump(self.folder/'handoff.json',changed)
+                with self.assertRaises(ValueError):check_package(self.folder)
+
+    def test_report_binds_the_baseline_manifest_and_timeline(self):
+        self.collect();report=compare(self.folder,self.returned())
+        self.assertEqual(report['baselineManifestSha256'],sha(self.folder/'handoff.json'))
+        self.assertEqual(report['baselineTimelineSha256'],sha(self.folder/'edit.otio'))
+
+    def test_shot_named_original_audio_does_not_collide_with_the_audio_identity(self):
+        self.fixture.edit['scenes'][0]['id']='original_audio';self.fixture.save()
+        from sbph.project import Project
+        self.fixture.p=self.p=Project.load(self.p.config);self.fixture.make_manifest();self.collect()
+        report=compare(self.folder,self.returned())
+        self.assertEqual(report['status'],'unchanged');self.assertTrue(report['originalAudioPreserved'])
+
 
 if __name__=='__main__':unittest.main()

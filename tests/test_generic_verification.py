@@ -63,6 +63,27 @@ class GenericVerification(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'missing'):self.check()
         self.assertEqual(report.read_bytes(),b'previous report')
 
+    def test_review_and_report_promotion_failure_restores_entire_previous_set(self):
+        review=self.p.output/'review';review.mkdir()
+        prior={self.p.output/'media-verification.json':b'previous report',review/'decoded-storyboard-1.jpg':b'previous sheet',
+            review/'frame-999999.png':b'obsolete managed sample',review/'owner-notes.txt':b'owner notes'}
+        for file,content in prior.items():file.write_bytes(content)
+        real=Path.replace
+        def replace(file,target):
+            if file.name=='media-verification.json' and file.parent.name.startswith('.delivery-check-'):raise OSError('receipt promotion failed')
+            return real(file,target)
+        with patch.object(Path,'replace',replace):
+            with self.assertRaisesRegex(OSError,'receipt promotion failed'):self.check()
+        for file,content in prior.items():self.assertEqual(file.read_bytes(),content)
+
+    def test_success_removes_obsolete_managed_review_pages_and_preserves_owner_files(self):
+        review=self.p.output/'review';review.mkdir()
+        obsolete=review/'decoded-storyboard-99.jpg';obsolete.write_bytes(b'old page')
+        owner=review/'owner-notes.txt';owner.write_text('Keep this')
+        report=self.check()
+        self.assertFalse(obsolete.exists());self.assertEqual(owner.read_text(),'Keep this')
+        self.assertTrue(Path(report['contactSheets'][0]).is_file())
+
     def test_configured_picture_reference_is_actually_compared(self):
         from sbph.review import decode_frames
         frames=self.p.root/'frames';frames.mkdir()

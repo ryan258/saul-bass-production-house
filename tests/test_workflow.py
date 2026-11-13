@@ -39,7 +39,7 @@ class Workflow(unittest.TestCase):
         def run(*args):return subprocess.run([sys.executable,'-m','sbph',*args],capture_output=True,text=True,env=env)
         edit=self.p.root/'data/edit.json';data=json.loads(edit.read_text());del data['frames'];edit.write_text(json.dumps(data))
         result=run('status',str(self.p.config))
-        self.assertEqual(result.returncode,1);self.assertIn('missing required field',result.stderr);self.assertNotIn('Traceback',result.stderr)
+        self.assertEqual(result.returncode,1);self.assertIn('Edit requires frames',result.stderr);self.assertNotIn('Traceback',result.stderr)
         script="import runpy,subprocess,sys;from unittest.mock import patch;sys.argv=['sbph','status','x']\n"\
             "with patch('sbph.project.Project.load',side_effect=subprocess.CalledProcessError(2,['node','x'])):runpy.run_module('sbph.__main__',run_name='__main__')"
         result=subprocess.run([sys.executable,'-c',script],capture_output=True,text=True,env=env)

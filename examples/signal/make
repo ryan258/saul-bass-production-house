@@ -6,7 +6,7 @@ signal_project="$signal_dir/production.json"
 signal_command=${1:-build}
 if [ "$#" -gt 0 ]; then shift; fi
 case "$signal_command" in
-  motion-shots|motion-timeline|motion-assemble|motion-package|motion-validate)
+  motion-shots|motion-timeline|motion-assemble|motion-package|motion-validate|motion-status|motion-resume|motion-check|motion-conform|motion-preflight|motion-evidence|motion-screen-record)
     exec "$signal_framework/sbph" "${signal_command#motion-}" "$signal_dir/production-motion.json" "$@"
     ;;
   prepare) exec "$signal_framework/.venv/bin/python" "$signal_dir/scripts/prepare.py" "$@" ;;
@@ -19,8 +19,8 @@ case "$signal_command" in
     "$signal_framework/sbph" check "$signal_project"
     "$signal_framework/sbph" conform "$signal_project"
     ;;
-  package|status|resume|animatic|revision|note|notes|resolve|reanchor|intent|doctor|proof|analyze|shots|timeline|assemble|validate|check|conform)
+  package|status|resume|animatic|revision|note|notes|resolve|reanchor|intent|doctor|proof|analyze|shots|timeline|assemble|validate|check|conform|preflight|evidence|screen-record)
     exec "$signal_framework/sbph" "$signal_command" "$signal_project" "$@"
     ;;
-  *) printf '%s\n' 'Use: make build | prepare | status | resume | animatic | revision | note | notes | resolve | reanchor | intent | doctor | proof | shots | timeline | assemble | validate | check | conform | analyze | package | motion-shots | motion-timeline | motion-assemble | motion-validate | motion-package' >&2; exit 2 ;;
+  *) printf '%s\n' 'Use: make build | prepare | status | resume | animatic | revision | note | notes | resolve | reanchor | intent | doctor | proof | shots | timeline | assemble | validate | check | conform | analyze | package | motion-shots | motion-timeline | motion-assemble | motion-validate | motion-package | preflight | evidence | screen-record | motion-status | motion-check' >&2; exit 2 ;;
 esac
